@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>89ers Online Diners</title>
+
+  <!-- ═══ PWA ═══ -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1A0A00">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="89ers Diner">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
+  <!-- ═══ SEO ═══ -->
+  <meta name="description" content="89ers Online Diners — Homestyle Filipino cuisine, ordered from anywhere in Iloilo.">
+  <meta property="og:title" content="89ers Online Diners">
+  <meta property="og:description" content="Homestyle Filipino cuisine, ordered from anywhere in Iloilo.">
+  <meta property="og:image" content="icons/icon-512.png">
+  <meta property="og:type" content="website">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold:  #D4A017;
+      --gold2: #B8860B;
+      --dark:  #1A0A00;
+      --dark2: #3B1800;
+      --red:   #C0392B;
+      --green: #27AE60;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--dark);
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── SPLASH ─── */
+    #splash {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, #1a1a00 0%, var(--dark) 70%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 999;
+      transition: opacity 0.6s ease;
+    }
+    #splash.hide { opacity: 0; pointer-events: none; }
+
+    /* spinning ring */
+    .logo-wrap {
+      position: relative;
+      width: 160px; height: 160px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 28px;
+    }
+    .logo-wrap::before {
+      content: '';
+      position: absolute; inset: -10px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: var(--gold);
+      border-right-color: var(--gold);
+      animation: spin 2s linear infinite;
+    }
+    .logo-wrap::after {
+      content: '';
+      position: absolute; inset: -18px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-bottom-color: var(--gold2);
+      border-left-color: var(--gold2);
+      animation: spin 3.5s linear infinite reverse;
+    }
+    .logo-wrap img {
+      width: 150px; height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow:
+        0 0 0 3px var(--gold),
+        0 0 40px rgba(212,160,23,0.45),
+        0 10px 40px rgba(0,0,0,0.7);
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+
+    .app-name {
+      font-size: 36px; font-weight: 900;
+      color: var(--gold); letter-spacing: 2px;
+      text-shadow: 0 0 24px rgba(212,160,23,0.55), 0 2px 8px rgba(0,0,0,0.7);
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    .app-sub {
+      font-size: 12px; font-weight: 500; letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(212,160,23,0.65);
+      margin-top: 6px;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .loading-bar-wrap {
+      margin-top: 40px; width: 180px; height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px; overflow: hidden;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+    .loading-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--gold2), var(--gold));
+      border-radius: 99px;
+      animation: loadbar 4.5s cubic-bezier(.4,0,.2,1) forwards;
+      box-shadow: 0 0 12px rgba(212,160,23,0.7);
+    }
+    .loading-text {
+      margin-top: 14px; font-size: 12px;
+      color: rgba(255,255,255,0.3); letter-spacing: 1px;
+      animation: fadeUp 0.7s 0.4s ease both;
+    }
+
+    @keyframes spin    { to { transform: rotate(360deg); } }
+    @keyframes pulse   { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+    @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+    @keyframes loadbar { 0%{width:0%} 40%{width:55%} 75%{width:82%} 100%{width:100%} }
+
+    /* ─── IFRAME ─── */
+    #appFrame {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      border: none; z-index: 1;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    #appFrame.show { opacity: 1; }
+
+    /* ─── INSTALL BANNER (Android/Chrome) ─── */
+    #installBanner {
+      display: none;
+      position: fixed; bottom: 16px; left: 12px; right: 12px;
+      z-index: 9998;
+      background: linear-gradient(135deg, var(--dark), var(--dark2));
+      border: 1.5px solid rgba(212,160,23,0.4);
+      border-radius: 18px; padding: 14px 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      align-items: center; gap: 12px;
+      animation: slideUp 0.4s ease;
+    }
+    #installBanner.show { display: flex; }
+    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:none;opacity:1} }
+
+    .install-icon {
+      width: 46px; height: 46px; border-radius: 12px;
+      object-fit: cover; flex-shrink: 0;
+    }
+    .install-text { flex: 1; min-width: 0; }
+    .install-title { font-weight: 800; font-size: 14px; color: white; line-height: 1.2; }
+    .install-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .install-btn {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: var(--dark); border: none; border-radius: 10px;
+      padding: 9px 16px; font-weight: 800; font-size: 13px;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      font-family: inherit;
+      box-shadow: 0 3px 10px rgba(212,160,23,0.35);
+    }
+    .install-dismiss {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.45);
+      width: 28px; height: 28px; border-radius: 50%;
+      font-size: 14px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: inherit;
+    }
+
+    /* ─── IOS INSTALL SHEET ─── */
+    #iosOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); z-index: 9997;
+      align-items: flex-end; justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    #iosOverlay.show { display: flex; }
+    .ios-sheet {
+      background: white; width: 100%; max-width: 520px;
+      border-radius: 24px 24px 0 0;
+      padding: 14px 24px 48px; text-align: center;
+      animation: slideUp 0.35s ease;
+    }
+    .ios-handle {
+      width: 36px; height: 4px; background: #ddd;
+      border-radius: 99px; margin: 0 auto 20px;
+    }
+    .ios-logo {
+      width: 80px; height: 80px; border-radius: 22px;
+      margin: 0 auto 16px; display: block;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    .ios-title { font-size: 22px; font-weight: 800; color: var(--dark); margin-bottom: 6px; }
+    .ios-sub { font-size: 14px; color: #7a7a7a; margin-bottom: 24px; line-height: 1.6; }
+    .ios-step {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: #f5f5f5; border-radius: 14px;
+      padding: 14px; margin-bottom: 10px; text-align: left;
+    }
+    .ios-step-num {
+      width: 30px; height: 30px; border-radius: 50%;
+      color: white; font-weight: 800; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .ios-step-title { font-weight: 700; font-size: 14px; color: var(--dark); }
+    .ios-step-sub { font-size: 13px; color: #7a7a7a; margin-top: 3px; }
+    .ios-got-it {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, var(--red), #A93226);
+      color: white; font-size: 15px; font-weight: 700;
+      cursor: pointer; margin-top: 14px; font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ SPLASH SCREEN ═══ -->
+<div id="splash">
+  <div class="logo-wrap">
+    <img src="icons/icon-192.png" alt="89ers Online Diners"
+         onerror="this.style.display='none'">
+  </div>
+  <div class="app-name">89ers</div>
+  <div class="app-sub">Online Diners</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar"></div>
+  </div>
+  <div class="loading-text">Loading menu…</div>
+</div>
+
+<!-- ═══ APP IFRAME — points to GAS Web App ═══
+     ↓ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW ↓           -->
+<iframe
+  id="appFrame"
+  src="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec"
+  allow="fullscreen"
+  allowfullscreen
+></iframe>
+
+<!-- ═══ ANDROID INSTALL BANNER ═══ -->
+<div id="installBanner">
+  <img src="icons/icon-96.png" class="install-icon" alt=""
+       onerror="this.style.display='none'">
+  <div class="install-text">
+    <div class="install-title">Install 89ers Diner</div>
+    <div class="install-sub">Add to home screen for faster ordering</div>
+  </div>
+  <button class="install-btn" onclick="installApp()">Install</button>
+  <button class="install-dismiss" onclick="dismissInstall()">✕</button>
+</div>
+
+<!-- ═══ iOS INSTALL SHEET ═══ -->
+<div id="iosOverlay" onclick="if(event.target===this)closeIOS()">
+  <div class="ios-sheet">
+    <div class="ios-handle"></div>
+    <img src="icons/icon-192.png" class="ios-logo" alt=""
+         onerror="this.style.display='none'">
+    <div class="ios-title">Install 89ers Diner</div>
+    <div class="ios-sub">
+      Add this app to your home screen for a fast, fullscreen ordering experience — no App Store needed!
+    </div>
+
+    <div class="ios-step">
+      <div class="ios-step-num" style="background:var(--red)">1</div>
+      <div>
+        <div class="ios-step-title">Tap the Share button</div>
+        <div class="ios-step-sub">
+          Find the
+          <span style="background:#007AFF;color:white;border-radius:6px;padding:2px 8px;font-weight:700;font-size:12px;">↑ Share</span>
+          icon at the bottom of Safari
+        </div>
+      </div>
+    </div>
+
+    <div class="ios-step">
+      <div class="ios-step-num" style="background:var(--red)">2</div>
+      <div>
+        <div class="ios-step-title">Tap "Add to Home Screen"</div>
+        <div class="ios-step-sub">Scroll down in the share menu and tap this option</div>
+      </div>
+    </div>
+
+    <div class="ios-step">
+      <div class="ios-step-num" style="background:var(--green)">✓</div>
+      <div>
+        <div class="ios-step-title">Tap "Add" — you're done!</div>
+        <div class="ios-step-sub">The 89ers icon will appear on your home screen</div>
+      </div>
+    </div>
+
+    <button class="ios-got-it" onclick="closeIOS()">Got it!</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+//  CONFIG — set your GAS URL here
+// ═══════════════════════════════
+var GAS_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec';
+
+// ═══════════════════════════════
+//  SPLASH → IFRAME handoff
+// ═══════════════════════════════
+var frame  = document.getElementById('appFrame');
+var splash = document.getElementById('splash');
+
+// update iframe src from config
+frame.src = GAS_URL;
+
+frame.addEventListener('load', function() {
+  setTimeout(revealApp, 800);
+});
+
+// safety fallback — hide splash after 5s regardless
+setTimeout(revealApp, 5000);
+
+function revealApp() {
+  splash.classList.add('hide');
+  frame.classList.add('show');
+}
+
+// ═══════════════════════════════
+//  SERVICE WORKER
+// ═══════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js')
+      .then(function(r) { console.log('89ers SW:', r.scope); })
+      .catch(function(e) { console.log('SW error:', e); });
+  });
+}
+
+// ═══════════════════════════════
+//  INSTALL PROMPT
+// ═══════════════════════════════
+var deferredPrompt   = null;
+var isIOS            = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+var isStandalone     = window.matchMedia('(display-mode: standalone)').matches
+                    || window.navigator.standalone === true;
+
+// Android/Chrome — capture install prompt
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+// After installed — hide banner
+window.addEventListener('appinstalled', function() {
+  deferredPrompt = null;
+  document.getElementById('installBanner').classList.remove('show');
+  console.log('89ers Diner installed!');
+});
+
+// iOS — show sheet after 5s if not standalone
+window.addEventListener('load', function() {
+  if (isStandalone) return; // already installed
+  if (isIOS) {
+    setTimeout(function() {
+      document.getElementById('iosOverlay').classList.add('show');
+    }, 5000);
+  }
+});
+
+function installApp() {
+  if (isIOS) { document.getElementById('iosOverlay').classList.add('show'); return; }
+  if (!deferredPrompt) return;
+  document.getElementById('installBanner').classList.remove('show');
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(c) {
+    if (c.outcome === 'accepted') deferredPrompt = null;
+    else setTimeout(function() {
+      document.getElementById('installBanner').classList.add('show');
+    }, 120000);
+  });
+}
+
+function dismissInstall() {
+  document.getElementById('installBanner').classList.remove('show');
+  // offer again in 2 minutes
+  setTimeout(function() {
+    if (deferredPrompt) document.getElementById('installBanner').classList.add('show');
+  }, 120000);
+}
+
+function closeIOS() {
+  document.getElementById('iosOverlay').classList.remove('show');
+}
+</script>
+</body>
+</html>
