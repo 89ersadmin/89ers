@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>89ers Online Diner</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1A0A00">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="89ers Diner">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
+  <!-- SEO / Social -->
+  <meta name="description" content="89ers Online Diner — Homestyle Filipino cuisine, ordered from anywhere in Iloilo.">
+  <meta property="og:title" content="89ers Online Diner">
+  <meta property="og:description" content="Homestyle Filipino cuisine, ordered from anywhere in Iloilo.">
+  <meta property="og:image" content="icons/icon-512.png">
+  <meta property="og:type" content="website">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --red:     #C0392B;
+      --red2:    #A93226;
+      --gold:    #D4A017;
+      --gold2:   #B8860B;
+      --cream:   #FBF6EF;
+      --dark:    #1A0A00;
+      --dark2:   #2D1200;
+      --muted:   #7A5C44;
+      --light:   #F0E8DF;
+      --white:   #FFFFFF;
+      --green:   #27AE60;
+      --danger:  #E74C3C;
+      --blue:    #2980B9;
+      --border:  #E2D5C8;
+      --shadow:  rgba(26,10,0,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ─── SCROLLBARS ─── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ═══════════════════════════════
+       LOADING SCREEN
+    ═══════════════════════════════ */
+    #loadingScreen {
+      position: fixed; inset: 0;
+      background: var(--dark);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 9999; transition: opacity 0.5s ease;
+    }
+    .loading-brand {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .loading-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 64px; color: var(--gold);
+      text-shadow: 0 0 40px rgba(212,160,23,0.4);
+      line-height: 1;
+    }
+    .loading-sub {
+      color: rgba(255,255,255,0.45); font-size: 12px;
+      letter-spacing: 4px; text-transform: uppercase; font-weight: 500;
+    }
+    .loading-bar {
+      width: 160px; height: 2px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px; margin-top: 36px; overflow: hidden;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+    .loading-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold2), var(--gold));
+      animation: loadBar 1.6s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    @keyframes loadBar { from{width:0} to{width:100%} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+    /* ═══════════════════════════════
+       LANDING PAGE
+    ═══════════════════════════════ */
+    #landingPage {
+      min-height: 100vh;
+      background: linear-gradient(165deg, #1A0A00 0%, #3B1800 45%, #1A0A00 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      padding: 0; position: relative; overflow: hidden;
+    }
+    .landing-bg-img {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0; transition: opacity 0.8s ease;
+    }
+    .landing-bg-img.loaded { opacity: 1; }
+    .landing-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg,
+        rgba(26,10,0,0.55) 0%,
+        rgba(26,10,0,0.35) 40%,
+        rgba(26,10,0,0.75) 100%);
+    }
+    .landing-content {
+      position: relative; z-index: 2;
+      width: 100%; display: flex; flex-direction: column;
+      align-items: center; padding: 40px 24px 40px;
+    }
+    .landing-badge {
+      background: rgba(212,160,23,0.15);
+      border: 1px solid rgba(212,160,23,0.45);
+      color: var(--gold); font-size: 11px; letter-spacing: 3px;
+      text-transform: uppercase; font-weight: 600;
+      padding: 8px 20px; border-radius: 99px; margin-bottom: 28px;
+      backdrop-filter: blur(8px);
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    .landing-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(46px, 12vw, 88px);
+      color: var(--white); text-align: center;
+      line-height: 1.05; margin-bottom: 10px;
+      text-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      animation: fadeUp 0.7s 0.15s ease both;
+    }
+    .landing-title em { color: var(--gold); font-style: normal; }
+    .landing-tagline {
+      color: rgba(255,255,255,0.7); font-size: 15px;
+      text-align: center; margin-bottom: 40px; font-weight: 300;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .landing-divider {
+      width: 60px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 36px;
+      animation: fadeUp 0.7s 0.25s ease both;
+    }
+
+    /* Carousel */
+    .food-carousel-wrap {
+      width: 100%; max-width: 460px; margin: 0 auto 36px;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .food-carousel {
+      width: 100%; aspect-ratio: 4/3;
+      border-radius: 20px; overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      position: relative; background: var(--dark2);
+    }
+    .carousel-slide {
+      position: absolute; inset: 0; opacity: 0;
+      transition: opacity 0.8s ease;
+      display: flex; align-items: flex-end;
+    }
+    .carousel-slide.active { opacity: 1; }
+    .carousel-slide img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 6s ease;
+    }
+    .carousel-slide.active img { transform: scale(1.04); }
+    .carousel-overlay {
+      position: relative; z-index: 2; width: 100%;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+      padding: 24px 20px 18px;
+    }
+    .carousel-cat {
+      font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; margin-bottom: 5px;
+    }
+    .carousel-name {
+      font-family: 'Playfair Display', serif; font-size: 22px;
+      color: white; font-weight: 700;
+    }
+    .carousel-price { font-size: 14px; color: var(--gold); font-weight: 600; margin-top: 3px; }
+    .carousel-dots {
+      position: absolute; bottom: 14px; right: 16px; z-index: 3;
+      display: flex; gap: 6px;
+    }
+    .carousel-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(255,255,255,0.35); transition: all 0.3s;
+      cursor: pointer; border: none; padding: 0;
+    }
+    .carousel-dot.active { background: var(--gold); transform: scale(1.4); }
+    .carousel-arrows {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 100%; display: flex; justify-content: space-between;
+      padding: 0 12px; z-index: 3; pointer-events: none;
+    }
+    .carousel-arrow {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
+      color: white; font-size: 16px; cursor: pointer; pointer-events: all;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; backdrop-filter: blur(4px);
+    }
+    .carousel-arrow:hover { background: rgba(212,160,23,0.6); border-color: var(--gold); }
+
+    .order-now-btn {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: var(--dark); font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 700; border: none;
+      padding: 18px 56px; border-radius: 99px; cursor: pointer;
+      box-shadow: 0 12px 36px rgba(212,160,23,0.4);
+      transition: all 0.3s;
+      animation: fadeUp 0.7s 0.3s ease both;
+      letter-spacing: 0.5px;
+    }
+    .order-now-btn:hover { transform: translateY(-3px); box-shadow: 0 18px 48px rgba(212,160,23,0.45); }
+    .order-now-btn:active { transform: none; }
+
+    /* ═══════════════════════════════
+       DASHBOARD SHELL
+    ═══════════════════════════════ */
+    #dashboard {
+      display: none; min-height: 100vh;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .dash-header {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%);
+      padding: 14px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 200;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+    .dash-header-left { display: flex; align-items: center; gap: 12px; }
+    .back-btn {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.6); font-size: 18px; cursor: pointer;
+      width: 34px; height: 34px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.12); color: white; }
+    .dash-logo {
+      font-family: 'Playfair Display', serif; font-size: 21px;
+      color: var(--gold); line-height: 1;
+    }
+    .dash-logo small {
+      font-family: 'DM Sans', sans-serif; font-size: 10px;
+      color: rgba(255,255,255,0.4); display: block;
+      letter-spacing: 2px; text-transform: uppercase; font-weight: 400; margin-top: 1px;
+    }
+    .hdr-actions { display: flex; gap: 8px; align-items: center; }
+    .hdr-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.85); padding: 7px 15px;
+      border-radius: 20px; font-size: 13px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-weight: 600;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .hdr-btn:hover { background: rgba(255,255,255,0.14); color: white; }
+    .hdr-btn.gold {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: var(--dark); border-color: transparent; font-weight: 700;
+    }
+    .hdr-btn.gold:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(212,160,23,0.4); }
+    .wallet-chip {
+      background: rgba(212,160,23,0.15);
+      border: 1px solid rgba(212,160,23,0.35);
+      color: var(--gold); font-size: 12px; font-weight: 700;
+      padding: 5px 12px; border-radius: 99px; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .wallet-chip:hover { background: rgba(212,160,23,0.25); }
+    .member-name-chip { color: rgba(255,255,255,0.55); font-size: 11px; font-weight: 500; }
+
+    /* Category toolbar */
+    .cat-toolbar {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      padding: 0 12px; display: flex; gap: 0; overflow-x: auto;
+      position: sticky; top: 63px; z-index: 100;
+    }
+    .cat-toolbar::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex-shrink: 0; padding: 14px 16px; font-size: 13px; font-weight: 600;
+      color: var(--muted); border: none; background: none; cursor: pointer;
+      border-bottom: 2px solid transparent; transition: all 0.2s;
+      white-space: nowrap; font-family: 'DM Sans', sans-serif;
+    }
+    .cat-tab.active { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
+    .cat-tab:hover:not(.active) { color: var(--dark); }
+
+    /* ═══════════════════════════════
+       PANELS
+    ═══════════════════════════════ */
+    .panel { display: none; }
+    .panel.active { display: block; }
+    #chatPanel.active { display: flex; flex-direction: column; }
+
+    /* ─── MENU PANEL ─── */
+    .menu-content { padding: 20px 16px 110px; }
+    .category-section { margin-bottom: 32px; }
+    .cat-section-header { margin-bottom: 16px; }
+    .cat-section-title {
+      font-family: 'Playfair Display', serif; font-size: 24px; color: var(--dark);
+    }
+    .cat-section-sub { font-size: 12px; color: var(--muted); margin-top: 3px; font-weight: 400; }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .menu-card {
+      background: var(--white); border-radius: 16px; overflow: hidden;
+      box-shadow: 0 2px 12px var(--shadow);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      cursor: pointer; position: relative;
+    }
+    .menu-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px var(--shadow); }
+    .menu-card:active { transform: translateY(-1px); }
+    .menu-card-img {
+      width: 100%; aspect-ratio: 1; overflow: hidden;
+      background: var(--light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 44px; position: relative;
+    }
+    .menu-card-img img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .menu-card:hover .menu-card-img img { transform: scale(1.06); }
+    .unavailable-overlay {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.75);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .menu-card-body { padding: 10px; }
+    .menu-card-name { font-weight: 700; font-size: 13px; color: var(--dark); margin-bottom: 3px; line-height: 1.3; }
+    .menu-card-desc { font-size: 11px; color: var(--muted); margin-bottom: 8px; line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .menu-card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .menu-card-price {
+      font-family: 'Playfair Display', serif; font-size: 16px;
+      color: var(--red); font-weight: 700;
+    }
+    .add-btn {
+      background: var(--red); color: white; border: none;
+      width: 30px; height: 30px; border-radius: 50%;
+      font-size: 20px; cursor: pointer; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .add-btn:hover { background: var(--red2); transform: scale(1.12); }
+    .no-items { text-align: center; padding: 32px; color: var(--muted); font-size: 14px; }
+
+    /* ─── CART PANEL ─── */
+    .cart-panel { padding: 16px 16px 110px; }
+    .panel-title {
+      font-family: 'Playfair Display', serif; font-size: 26px;
+      color: var(--dark); margin-bottom: 18px; padding-top: 6px;
+    }
+
+    /* Info cards */
+    .info-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;
+    }
+    .info-card-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .info-card-icon { font-size: 20px; }
+    .info-card-title { font-weight: 700; font-size: 14px; color: var(--dark); }
+    .info-card-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-size: 12px; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-family: 'DM Sans', sans-serif;
+      color: var(--dark); background: var(--white);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none; -webkit-appearance: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212,160,23,0.12);
+    }
+    .form-textarea { resize: none; height: 72px; }
+    .form-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237A5C44' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    .autofill-badge {
+      background: #d4edda; color: #155724; font-size: 11px;
+      font-weight: 700; padding: 3px 10px; border-radius: 99px; display: inline-block;
+    }
+
+    /* Delivery fee banner */
+    .delivery-banner {
+      background: linear-gradient(135deg, #f0fff4, #e8f8ed);
+      border: 1px solid rgba(39,174,96,0.25);
+      border-radius: 12px; padding: 12px 16px; margin-bottom: 14px;
+      display: none;
+    }
+    .delivery-banner.show { display: flex; align-items: center; justify-content: space-between; }
+    .delivery-banner-left { display: flex; align-items: center; gap: 10px; }
+    .delivery-banner-label { font-size: 12px; color: var(--muted); }
+    .delivery-banner-area { font-weight: 700; font-size: 14px; color: var(--dark); }
+    .delivery-banner-fee { font-weight: 800; font-size: 18px; color: var(--green); }
+
+    /* Cart items */
+    .cart-items-wrap { margin-bottom: 16px; }
+    .cart-empty {
+      text-align: center; padding: 48px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .cart-empty-icon { font-size: 56px; }
+    .cart-empty-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--muted); }
+    .cart-empty-sub { font-size: 14px; color: #bbb; }
+
+    .cart-item {
+      display: flex; gap: 12px; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid var(--light);
+    }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-thumb {
+      width: 58px; height: 58px; border-radius: 12px;
+      overflow: hidden; background: var(--light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; flex-shrink: 0;
+    }
+    .cart-item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name { font-weight: 700; font-size: 14px; color: var(--dark); }
+    .cart-item-unit { font-size: 12px; color: var(--muted); }
+    .cart-item-controls { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
+    .qty-btn {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: none;
+      cursor: pointer; font-size: 14px; font-weight: 700;
+      color: var(--dark); transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qty-btn:hover { border-color: var(--red); color: var(--red); }
+    .qty-num { font-weight: 700; font-size: 15px; min-width: 22px; text-align: center; }
+    .remove-btn {
+      background: none; border: none; color: #ccc; cursor: pointer;
+      font-size: 16px; padding: 4px; transition: color 0.2s;
+      display: flex; align-items: center;
+    }
+    .remove-btn:hover { color: var(--danger); }
+    .cart-item-total { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--red); font-weight: 700; }
+
+    /* Order summary */
+    .order-summary {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; margin-top: 16px;
+    }
+    .summary-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 14px; color: var(--muted); padding: 6px 0;
+    }
+    .summary-divider { height: 1px; background: var(--light); margin: 10px 0; }
+    .summary-total {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 20px; font-weight: 800; color: var(--dark);
+    }
+    .summary-total span:last-child {
+      font-family: 'Playfair Display', serif; color: var(--red);
+    }
+
+    .payment-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
+    .pay-option {
+      padding: 12px 8px; border: 1.5px solid var(--border);
+      border-radius: 12px; background: none; cursor: pointer;
+      text-align: center; font-family: 'DM Sans', sans-serif;
+      font-weight: 600; font-size: 13px; color: var(--muted);
+      transition: all 0.2s;
+    }
+    .pay-option:hover { border-color: var(--gold); color: var(--dark); }
+    .pay-option.active { border-color: var(--red); color: var(--red); background: rgba(192,57,43,0.04); }
+    .pay-option .pay-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+    .place-order-btn {
+      width: 100%; padding: 16px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, var(--red), var(--red2));
+      color: white; font-size: 16px; font-weight: 700;
+      font-family: 'DM Sans', sans-serif; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(192,57,43,0.3);
+      transition: all 0.3s;
+    }
+    .place-order-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(192,57,43,0.35); }
+    .place-order-btn:active { transform: none; }
+
+    /* ─── MEMBER PANEL ─── */
+    .member-panel { padding: 0 0 110px; }
+    .mem-hero {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 100%);
+      padding: 24px 20px 28px; position: relative; overflow: hidden;
+    }
+    .mem-hero::after {
+      content: ''; position: absolute;
+      right: -40px; top: -40px; width: 220px; height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,160,23,0.12) 0%, transparent 70%);
+    }
+    .mem-hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; position: relative; z-index: 1; }
+    .mem-wallet-label { color: rgba(255,255,255,0.45); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 5px; }
+    .mem-wallet-amount { font-family: 'Playfair Display', serif; font-size: 40px; color: var(--gold); line-height: 1; }
+    .mem-wallet-sub { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 5px; }
+    .mem-name { color: white; font-weight: 700; font-size: 15px; text-align: right; }
+    .mem-since { color: rgba(255,255,255,0.35); font-size: 11px; text-align: right; margin-top: 3px; }
+    .suki-badge {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: var(--dark); font-size: 10px; font-weight: 800;
+      padding: 4px 12px; border-radius: 99px; display: inline-block;
+      letter-spacing: 1px; text-transform: uppercase; margin-top: 6px;
+    }
+    .mem-hero-stats {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px; position: relative; z-index: 1;
+    }
+    .mem-stat {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px; padding: 14px 10px; text-align: center;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .mem-stat:hover { background: rgba(255,255,255,0.12); border-color: rgba(212,160,23,0.35); transform: translateY(-2px); }
+    .mem-stat-icon { font-size: 22px; margin-bottom: 5px; }
+    .mem-stat-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+    .mem-stat-val { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--gold); font-weight: 700; }
+
+    .mem-body { padding: 20px 16px; }
+
+    /* Points progress */
+    .points-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; margin-bottom: 14px;
+    }
+    .points-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .points-card-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--dark); }
+    .points-count { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--red); font-weight: 700; }
+    .progress-track { background: var(--light); border-radius: 99px; height: 10px; overflow: hidden; }
+    .progress-bar {
+      background: linear-gradient(90deg, var(--gold), var(--red));
+      height: 100%; border-radius: 99px; transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+    .progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .next-reward {
+      background: linear-gradient(135deg, #FFF8F0, #FFF0DC);
+      border: 1px solid rgba(212,160,23,0.25);
+      border-radius: 12px; padding: 12px 16px; margin-top: 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .next-reward-icon { font-size: 28px; }
+    .next-reward-text { font-size: 13px; color: var(--dark); font-weight: 700; }
+    .next-reward-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Raffle card */
+    .raffle-card {
+      background: linear-gradient(135deg, #8B0000, var(--red));
+      border-radius: 16px; padding: 22px; margin-bottom: 14px;
+      color: white; position: relative; overflow: hidden;
+    }
+    .raffle-card::before { content: '🎟️'; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 72px; opacity: 0.12; }
+    .raffle-title { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 4px; }
+    .raffle-sub { font-size: 13px; opacity: 0.75; margin-bottom: 14px; }
+    .raffle-count { font-family: 'Playfair Display', serif; font-size: 52px; color: var(--gold); font-weight: 700; line-height: 1; }
+    .raffle-count-label { font-size: 12px; opacity: 0.65; margin-top: 4px; }
+    .raffle-info { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; margin-top: 14px; }
+    .raffle-info-title { font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+    .raffle-info-item { font-size: 12px; opacity: 0.8; margin-bottom: 5px; }
+
+    /* Quick actions */
+    .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .quick-action-btn {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px 16px; cursor: pointer;
+      text-align: left; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .quick-action-btn:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 6px 18px var(--shadow); }
+    .qa-icon { font-size: 26px; margin-bottom: 8px; }
+    .qa-label { font-weight: 700; font-size: 14px; color: var(--dark); }
+    .qa-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Not logged in */
+    .members-only {
+      text-align: center; padding: 60px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .members-only-icon { font-size: 56px; }
+
+    /* ─── CHAT PANEL ─── */
+    .chat-wrapper {
+      display: flex; flex-direction: column; flex: 1;
+      height: calc(100vh - 63px - 60px); min-height: 0;
+    }
+    .chat-header {
+      background: linear-gradient(135deg, var(--dark), var(--dark2));
+      padding: 14px 18px; flex-shrink: 0;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .rider-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .rider-name { font-weight: 700; font-size: 15px; color: white; }
+    .rider-status { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .online-dot { color: #2ecc71; margin-right: 3px; }
+
+    .chat-order-banner {
+      background: #FFF8F0; border-bottom: 1px solid rgba(212,160,23,0.2);
+      padding: 10px 16px; flex-shrink: 0; display: none;
+    }
+    .chat-order-banner.show { display: block; }
+    .chat-order-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 2px; }
+    .chat-order-text { font-size: 13px; color: var(--dark); font-weight: 700; }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 14px;
+      display: flex; flex-direction: column; gap: 10px;
+      background: #f4efe9; min-height: 0;
+    }
+    .chat-date-label { text-align: center; }
+    .chat-date-label span {
+      background: rgba(0,0,0,0.1); color: var(--muted);
+      font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 99px;
+    }
+    .msg-out { display: flex; justify-content: flex-end; }
+    .msg-in { display: flex; gap: 8px; align-items: flex-end; }
+    .msg-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gold); display: flex; align-items: center;
+      justify-content: center; font-size: 14px; flex-shrink: 0;
+    }
+    .bubble {
+      padding: 10px 14px; border-radius: 18px;
+      font-size: 14px; line-height: 1.5; max-width: 72%;
+      word-break: break-word; white-space: pre-wrap;
+    }
+    .bubble-out {
+      background: var(--red); color: white;
+      border-radius: 18px 18px 4px 18px;
+      box-shadow: 0 2px 8px rgba(192,57,43,0.2);
+    }
+    .bubble-in {
+      background: white; color: var(--dark);
+      border-radius: 18px 18px 18px 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .bubble-order {
+      background: linear-gradient(135deg, var(--dark), var(--dark2));
+      font-family: monospace; font-size: 12px; line-height: 1.6;
+    }
+    .msg-time { font-size: 10px; color: var(--muted); margin-top: 3px; padding: 0 4px; }
+
+    .typing-indicator { display: none; flex-shrink: 0; padding: 8px 14px; background: #f4efe9; }
+    .typing-indicator.show { display: flex; gap: 8px; align-items: center; }
+    .typing-bubble {
+      background: white; padding: 10px 14px; border-radius: 18px;
+      display: flex; gap: 4px; align-items: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .typing-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--muted); animation: typingBounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%,60%,100% { transform: none; opacity: 0.6; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .chat-input-bar {
+      background: white; border-top: 1px solid var(--border);
+      padding: 10px 14px; display: flex; gap: 10px; align-items: center;
+      flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1; padding: 11px 16px; border: 1.5px solid var(--border);
+      border-radius: 99px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+      outline: none; transition: border-color 0.2s; background: #fafafa;
+    }
+    .chat-input:focus { border-color: var(--red); background: white; }
+    .chat-send-btn {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--red); border: none; cursor: pointer;
+      color: white; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; box-shadow: 0 3px 10px rgba(192,57,43,0.3);
+      flex-shrink: 0;
+    }
+    .chat-send-btn:hover { background: var(--red2); transform: scale(1.08); }
+    .chat-send-btn:active { transform: scale(0.95); }
+
+    /* ─── BOTTOM NAV ─── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--white); border-top: 1px solid var(--border);
+      display: flex; z-index: 150;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bnav-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 3px; background: none; border: none;
+      cursor: pointer; padding: 10px 4px 8px; color: var(--muted);
+      font-size: 11px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      transition: color 0.2s;
+    }
+    .bnav-btn.active { color: var(--red); }
+    .bnav-icon-wrap { position: relative; display: inline-block; }
+    .bnav-icon { font-size: 22px; display: block; line-height: 1; }
+    .badge {
+      position: absolute; top: -4px; right: -6px;
+      background: var(--red); color: white; font-size: 9px; font-weight: 800;
+      min-width: 16px; height: 16px; border-radius: 99px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 3px;
+    }
+    .badge.hidden { display: none; }
+
+    /* ═══════════════════════════════
+       MODALS
+    ═══════════════════════════════ */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      z-index: 500; display: none; align-items: flex-end; justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .overlay.open { display: flex; }
+    .sheet {
+      background: var(--white); width: 100%; max-width: 520px;
+      border-radius: 24px 24px 0 0;
+      padding: 12px 24px 36px; max-height: 92vh; overflow-y: auto;
+      animation: sheetUp 0.3s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes sheetUp { from{transform:translateY(40px);opacity:0} to{transform:none;opacity:1} }
+    .sheet-handle {
+      width: 36px; height: 4px; background: var(--border);
+      border-radius: 99px; margin: 0 auto 16px;
+    }
+    .sheet-close-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+    .close-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--light); border: none; cursor: pointer;
+      color: var(--muted); font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .close-btn:hover { background: var(--border); color: var(--dark); transform: rotate(90deg); }
+
+    /* Auth modal */
+    .auth-tabs { display: flex; gap: 0; background: var(--light); border-radius: 12px; padding: 4px; margin-bottom: 22px; }
+    .auth-tab {
+      flex: 1; padding: 10px; text-align: center; font-weight: 700;
+      font-size: 14px; border-radius: 9px; cursor: pointer;
+      transition: all 0.2s; color: var(--muted); border: none; background: none;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .auth-tab.active {
+      background: var(--white); color: var(--red);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .sheet-title { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--dark); margin-bottom: 5px; }
+    .sheet-sub { font-size: 13px; color: var(--muted); margin-bottom: 22px; font-weight: 400; }
+    .alert {
+      padding: 12px 14px; border-radius: 10px; font-size: 13px;
+      margin-bottom: 16px; display: none; font-weight: 500;
+    }
+    .alert.error { background: #fde; color: var(--danger); display: block; }
+    .alert.success { background: #d4edda; color: #155724; display: block; }
+
+    .submit-btn {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, var(--red), var(--red2));
+      color: white; font-size: 15px; font-weight: 700;
+      font-family: 'DM Sans', sans-serif; cursor: pointer;
+      transition: all 0.3s; margin-top: 4px;
+    }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(192,57,43,0.3); }
+    .submit-btn.gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--dark); }
+    .submit-btn.gold:hover { box-shadow: 0 8px 22px rgba(212,160,23,0.3); }
+
+    .perks-box {
+      background: linear-gradient(135deg, #FFF8F0, #FFF0DC);
+      border: 1px solid rgba(212,160,23,0.25);
+      border-radius: 14px; padding: 16px; margin-bottom: 20px;
+    }
+    .perks-title { font-weight: 700; color: var(--dark); margin-bottom: 10px; font-size: 14px; }
+    .perk { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 7px; }
+
+    .sample-login {
+      background: var(--light); border: 1px dashed var(--border);
+      border-radius: 12px; padding: 14px; margin-top: 16px;
+    }
+    .sample-login-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .sample-login-field { font-size: 13px; color: var(--dark); margin-bottom: 4px; }
+    .fill-sample-btn {
+      width: 100%; padding: 8px; border: none; border-radius: 8px;
+      background: var(--red); color: white; font-size: 12px; font-weight: 700;
+      cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 8px; transition: all 0.2s;
+    }
+    .fill-sample-btn:hover { background: var(--red2); }
+
+    /* Item detail modal */
+    .item-hero {
+      width: 100%; border-radius: 14px; aspect-ratio: 16/9;
+      overflow: hidden; background: var(--light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 60px; margin-bottom: 18px;
+    }
+    .item-hero img { width: 100%; height: 100%; object-fit: cover; }
+    .item-name { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--dark); margin-bottom: 4px; }
+    .item-price { font-size: 24px; color: var(--red); font-weight: 800; margin-bottom: 10px; }
+    .item-desc { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 20px; font-weight: 400; }
+    .qty-control {
+      display: flex; align-items: center; gap: 20px; margin-bottom: 20px;
+    }
+    .qty-btn-lg {
+      width: 42px; height: 42px; border-radius: 50%;
+      border: 2px solid var(--border); background: none;
+      cursor: pointer; font-size: 22px; font-weight: 700;
+      color: var(--dark); transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qty-btn-lg:hover { border-color: var(--red); color: var(--red); }
+    .qty-num-lg { font-size: 26px; font-weight: 700; min-width: 40px; text-align: center; color: var(--dark); }
+
+    /* Reload modal */
+    .gcash-badge {
+      background: linear-gradient(135deg, #007DFF, #0057B8);
+      color: white; font-weight: 900; font-size: 16px;
+      padding: 7px 16px; border-radius: 10px; display: inline-block;
+      margin-bottom: 16px; letter-spacing: 1px;
+    }
+    .gcash-number-box {
+      background: #f0f8ff; border: 2px solid rgba(0,125,255,0.3);
+      border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center;
+    }
+    .gcash-box-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .gcash-box-number { font-family: 'Playfair Display', serif; font-size: 28px; color: #007DFF; font-weight: 700; letter-spacing: 2px; }
+    .gcash-box-name { font-size: 13px; color: var(--dark); font-weight: 700; margin-top: 4px; }
+    .reload-step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 50%; background: var(--red);
+      color: white; font-size: 12px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+    }
+    .step-text { font-size: 13px; color: var(--dark); line-height: 1.5; }
+    .amount-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 14px 0; }
+    .amount-btn {
+      padding: 12px; border: 1.5px solid var(--border);
+      border-radius: 12px; background: none; font-weight: 800;
+      font-size: 14px; cursor: pointer; transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif; color: var(--dark);
+    }
+    .amount-btn:hover, .amount-btn.sel { border-color: var(--gold); background: #FFF8F0; color: var(--red); }
+
+    /* Order success */
+    .order-success-content { text-align: center; padding: 12px 0 16px; }
+    .success-animation { font-size: 64px; margin-bottom: 16px; animation: successPop 0.5s cubic-bezier(.4,0,.2,1); }
+    @keyframes successPop { 0%{transform:scale(0)} 70%{transform:scale(1.15)} 100%{transform:scale(1)} }
+    .success-title { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--dark); margin-bottom: 8px; }
+    .success-sub { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+    .order-ref {
+      background: var(--light); border-radius: 12px; padding: 14px;
+      font-family: monospace; font-size: 14px; color: var(--dark);
+      font-weight: 700; letter-spacing: 1px; margin-bottom: 20px;
+    }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--dark); color: white;
+      padding: 12px 22px; border-radius: 99px;
+      font-size: 13px; font-weight: 600; z-index: 9999;
+      opacity: 0; transition: all 0.3s; pointer-events: none;
+      white-space: nowrap; max-width: calc(100vw - 32px);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ─── RESPONSIVE ─── */
+    @media(min-width: 540px) {
+      .menu-grid { grid-template-columns: repeat(3, 1fr); }
+      .overlay { align-items: center; }
+      .sheet { border-radius: 20px; max-height: 85vh; margin: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ LOADING ═══ -->
+<div id="loadingScreen">
+  <div class="loading-brand">
+    <div class="loading-logo">89ers</div>
+    <div class="loading-sub">Online Diner</div>
+  </div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+
+<!-- ═══ LANDING ═══ -->
+<div id="landingPage" class="hidden">
+  <div class="landing-bg-img" id="landingBgImg"></div>
+  <div class="landing-overlay"></div>
+  <div class="landing-content">
+
+    <div class="landing-title">89ers<br><em>Online Diner</em></div>
+    <div class="landing-tagline">Homestyle Filipino cuisine, ordered from anywhere.</div>
+    <div class="landing-divider"></div>
+
+    <!-- Carousel -->
+    <div class="food-carousel-wrap">
+      <div class="food-carousel" id="foodCarousel">
+        <div class="carousel-slide active">
+          <img src="https://images.unsplash.com/photo-1598511796432-32d4e0890fc9?w=900&q=80" alt="Chicken Inasal" loading="lazy">
+          <div class="carousel-overlay">
+            <div class="carousel-cat">🍛 Main Dish</div>
+            <div class="carousel-name">Chicken Inasal</div>
+            <div class="carousel-price">Starting at ₱89</div>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://images.unsplash.com/photo-1547592180-85f173990554?w=900&q=80" alt="Sizzling Sisig" loading="lazy">
+          <div class="carousel-overlay">
+            <div class="carousel-cat">🍛 Main Dish</div>
+            <div class="carousel-name">Sizzling Sisig</div>
+            <div class="carousel-price">Starting at ₱129</div>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=900&q=80" alt="Tapsilog" loading="lazy">
+          <div class="carousel-overlay">
+            <div class="carousel-cat">🍳 Breakfast</div>
+            <div class="carousel-name">Tapsilog</div>
+            <div class="carousel-price">Starting at ₱75</div>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=900&q=80" alt="Arroz Caldo" loading="lazy">
+          <div class="carousel-overlay">
+            <div class="carousel-cat">🍳 Breakfast</div>
+            <div class="carousel-name">Arroz Caldo</div>
+            <div class="carousel-price">Starting at ₱55</div>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=900&q=80" alt="Iced Café Latte" loading="lazy">
+          <div class="carousel-overlay">
+            <div class="carousel-cat">🧊 Beverages</div>
+            <div class="carousel-name">Iced Café Latte</div>
+            <div class="carousel-price">Starting at ₱65</div>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80" alt="Pan de Sal" loading="lazy">
+          <div class="carousel-overlay">
+            <div class="carousel-cat">🍞 Breads</div>
+            <div class="carousel-name">Fresh Pan de Sal</div>
+            <div class="carousel-price">₱8 per piece</div>
+          </div>
+        </div>
+        <div class="carousel-arrows">
+          <button class="carousel-arrow" onclick="carouselPrev()">&#8249;</button>
+          <button class="carousel-arrow" onclick="carouselNext()">&#8250;</button>
+        </div>
+        <div class="carousel-dots" id="carouselDots"></div>
+      </div>
+    </div>
+
+    <button class="order-now-btn" onclick="openDashboard()">🍴 Order Now</button>
+
+    <!-- Install button shown only when installable -->
+    <button id="landingInstallBtn" onclick="installApp()" style="display:none;margin-top:14px;
+      background:none;border:1.5px solid rgba(212,160,23,0.5);color:var(--gold);
+      font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;
+      padding:12px 32px;border-radius:99px;cursor:pointer;letter-spacing:0.5px;
+      transition:all 0.3s;backdrop-filter:blur(4px);">
+      📲 Install App
+    </button>
+    <!-- iOS install hint -->
+    <div id="iosInstallHint" style="display:none;margin-top:14px;
+      background:rgba(255,255,255,0.08);border:1px solid rgba(212,160,23,0.3);
+      border-radius:14px;padding:12px 18px;text-align:center;max-width:320px;">
+      <div style="color:var(--gold);font-size:13px;font-weight:700;margin-bottom:4px;">📲 Install on iPhone</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:12px;line-height:1.6;">
+        Tap the <strong style="color:white;">Share</strong> button ↑ in Safari<br>
+        then <strong style="color:white;">"Add to Home Screen"</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="dashboard">
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <button class="back-btn" onclick="backToLanding()">←</button>
+      <div class="dash-logo">89ers <small>Online Diner</small></div>
+    </div>
+    <div id="guestHeader" class="hdr-actions">
+      <button class="hdr-btn" onclick="openAuthModal('login')">Log In</button>
+      <button class="hdr-btn gold" onclick="openAuthModal('signup')">Join Suki</button>
+    </div>
+    <div id="memberHeader" class="hdr-actions hidden">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="wallet-chip" onclick="switchPanel('member')">💳 ₱<span id="hdrWallet">0.00</span></div>
+          <button class="hdr-btn" onclick="logoutUser()" style="padding:7px 12px;">Sign Out</button>
+        </div>
+        <div class="member-name-chip" id="hdrMemberName">⭐ Suki Member</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category toolbar (hidden on non-menu panels) -->
+  <div class="cat-toolbar" id="catToolbar">
+    <button class="cat-tab active" onclick="filterCat('all',this)">🍽️ All</button>
+    <button class="cat-tab" onclick="filterCat('maindish',this)">🍛 Main Dish</button>
+    <button class="cat-tab" onclick="filterCat('beverages',this)">🧊 Beverages</button>
+    <button class="cat-tab" onclick="filterCat('breakfast',this)">🍳 Breakfast</button>
+    <button class="cat-tab" onclick="filterCat('merienda',this)">🍲 Merienda</button>
+    <button class="cat-tab" onclick="filterCat('breads',this)">🍞 Breads</button>
+  </div>
+
+  <!-- Menu Panel -->
+  <div id="menuPanel" class="panel active">
+    <div class="menu-content" id="menuContent">
+      <div class="no-items" style="padding:60px;font-size:15px;color:#ccc;">Loading menu…</div>
+    </div>
+  </div>
+
+  <!-- Cart Panel -->
+  <div id="cartPanel" class="panel">
+    <div class="cart-panel">
+      <div class="panel-title">My Order 🛒</div>
+
+      <!-- Delivery notice -->
+      <div class="info-card" style="background:linear-gradient(135deg,#FFF8F0,#FFF0DC);border-color:rgba(212,160,23,0.25);">
+        <div class="info-card-header">
+          <div class="info-card-icon">🚚</div>
+          <div>
+            <div class="info-card-title">Delivery Only</div>
+            <div class="info-card-sub">We deliver to selected areas in Iloilo City &amp; nearby towns.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delivery point -->
+      <div class="info-card">
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">📍 Delivery Area</label>
+          <select id="deliveryPoint" class="form-select" onchange="updateDelivery()">
+            <option value="">— Select your delivery area —</option>
+            <option value="Jaro" data-fee="40" data-time="25-35 mins">Jaro, Iloilo City</option>
+            <option value="Molo" data-fee="35" data-time="20-30 mins">Molo, Iloilo City</option>
+            <option value="La Paz" data-fee="40" data-time="25-35 mins">La Paz, Iloilo City</option>
+            <option value="Mandurriao" data-fee="45" data-time="30-40 mins">Mandurriao, Iloilo City</option>
+            <option value="City Proper" data-fee="30" data-time="15-25 mins">City Proper, Iloilo City</option>
+            <option value="Lapaz" data-fee="40" data-time="25-35 mins">Lapaz, Iloilo City</option>
+            <option value="Arevalo" data-fee="50" data-time="35-45 mins">Arevalo, Iloilo City</option>
+            <option value="Pavia" data-fee="60" data-time="40-55 mins">Pavia, Iloilo</option>
+            <option value="Santa Barbara" data-fee="70" data-time="45-60 mins">Santa Barbara, Iloilo</option>
+            <option value="Leganes" data-fee="65" data-time="40-55 mins">Leganes, Iloilo</option>
+            <option value="Oton" data-fee="70" data-time="45-60 mins">Oton, Iloilo</option>
+            <option value="Leon" data-fee="90" data-time="55-70 mins">Leon, Iloilo</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">🕐 Preferred Delivery Time</label>
+          <select id="deliveryTime" class="form-select">
+            <option value="">— Select time —</option>
+            <option value="10:00 AM">10:00 AM</option>
+            <option value="11:30 AM">11:30 AM</option>
+            <option value="3:00 PM">3:00 PM</option>
+            <option value="6:00 PM">6:00 PM</option>
+            <option value="10:00 PM">10:00 PM</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Delivery fee badge -->
+      <div class="delivery-banner" id="deliveryBanner">
+        <div class="delivery-banner-left">
+          <span style="font-size:20px">🛵</span>
+          <div>
+            <div class="delivery-banner-label">Delivering to</div>
+            <div class="delivery-banner-area" id="deliveryAreaName">—</div>
+          </div>
+        </div>
+        <div>
+          <div class="delivery-banner-label" style="text-align:right">Delivery Fee</div>
+          <div class="delivery-banner-fee" id="deliveryFeeAmt">FREE</div>
+        </div>
+      </div>
+
+      <!-- Customer details -->
+      <div class="info-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="info-card-title">👤 Your Details</div>
+          <div id="autoFillBadge" class="autofill-badge hidden">✅ Auto-filled</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" id="custName" class="form-input" placeholder="Juan dela Cruz">
+        </div>
+        <div class="form-group">
+          <label class="form-label">📘 Facebook Messenger Name *</label>
+          <input type="text" id="messengerName" class="form-input" placeholder="facebook.com/yourname or @username">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">📞 Contact Number *</label>
+          <input type="tel" id="contactNum" class="form-input" placeholder="09XX XXX XXXX">
+        </div>
+      </div>
+
+      <!-- Special instructions -->
+      <div class="info-card" style="padding-bottom:16px;">
+        <label class="form-label">📝 Special Instructions <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label>
+        <textarea id="specialInst" class="form-textarea" placeholder="e.g. No onions, extra rice, ring the doorbell…"></textarea>
+      </div>
+
+      <!-- Cart items -->
+      <div id="cartItems" class="cart-items-wrap"></div>
+      <div id="cartEmpty" class="cart-empty">
+        <div class="cart-empty-icon">🛒</div>
+        <div class="cart-empty-title">Your cart is empty</div>
+        <div class="cart-empty-sub">Browse our menu and add some delicious items!</div>
+        <button class="submit-btn" style="width:auto;padding:12px 28px;margin-top:12px;" onclick="switchPanel('menu')">Browse Menu</button>
+      </div>
+
+      <!-- Summary -->
+      <div id="orderSummary" class="order-summary hidden">
+        <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal">₱0.00</span></div>
+        <div class="summary-row"><span>Delivery Fee</span><span style="color:var(--green);font-weight:700;">FREE</span></div>
+        <div class="summary-row" style="font-size:12px;color:#bbb;"><span>Service Fee</span><span>FREE</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-total"><span>Total</span><span id="sumTotal">₱0.00</span></div>
+
+        <div style="margin:18px 0 10px;">
+          <div class="form-label" style="margin-bottom:10px;">💳 Payment Method</div>
+          <div class="payment-grid">
+            <button class="pay-option" onclick="selectPayment('cash',this)"><span class="pay-icon">💵</span>Cash COD</button>
+            <button class="pay-option" onclick="selectPayment('wallet',this)"><span class="pay-icon">💳</span>Wallet</button>
+            <button class="pay-option" onclick="selectPayment('gcash',this)"><span class="pay-icon">📱</span>GCash</button>
+          </div>
+          <input type="hidden" id="paymentMethod" value="">
+        </div>
+
+        <!-- GCash Instructions (shown only when GCash selected) -->
+        <div id="gcashInstructions" style="display:none;margin-bottom:16px;">
+          <div style="background:linear-gradient(135deg,#e8f4ff,#d0e8ff);border:1.5px solid rgba(0,125,255,0.25);border-radius:14px;padding:16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+              <div style="background:linear-gradient(135deg,#007DFF,#0057B8);color:white;font-weight:900;font-size:13px;padding:5px 12px;border-radius:8px;letter-spacing:1px;">G<span style="color:#00E5FF">C</span>ash</div>
+              <div style="font-weight:700;font-size:14px;color:#0057B8;">Payment Instructions</div>
+            </div>
+            <div style="background:white;border-radius:10px;padding:14px;margin-bottom:12px;text-align:center;border:1px solid rgba(0,125,255,0.15);">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Send payment to</div>
+              <div style="font-family:'Playfair Display',serif;font-size:26px;color:#007DFF;font-weight:700;letter-spacing:2px;">0917-555-8989</div>
+              <div style="font-size:13px;font-weight:700;color:var(--dark);margin-top:4px;">89ers Online Diner</div>
+            </div>
+            <div style="font-size:13px;color:var(--dark);margin-bottom:10px;line-height:1.6;">
+              1. Open GCash and send <strong id="gcashAmountLabel">the total amount</strong> to the number above.<br>
+              2. Enter your <strong>GCash reference number</strong> below after sending.
+            </div>
+            <label class="form-label" style="margin-bottom:6px;">GCash Reference No. *</label>
+            <input type="text" id="gcashRefCart" class="form-input" placeholder="e.g. 1234567890" maxlength="30"
+                   style="background:white;">
+          </div>
+        </div>
+
+        <button class="place-order-btn" onclick="placeOrder()">🚚 Place Delivery Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Member Panel -->
+  <div id="memberPanel" class="panel">
+    <div class="member-panel" id="memberPanelContent">
+      <div class="members-only">
+        <div class="members-only-icon">🔐</div>
+        <div class="sheet-title">Members Only</div>
+        <div style="font-size:14px;color:var(--muted);max-width:260px;margin:0 auto;">Log in or sign up as a Suki member to access your wallet, points and exclusive perks.</div>
+        <button class="submit-btn gold" style="width:auto;padding:12px 28px;margin-top:16px;" onclick="openAuthModal('signup')">Join Suki — It's Free!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Panel -->
+  <div id="chatPanel" class="panel">
+    <div class="chat-wrapper">
+      <div class="chat-header">
+        <div class="rider-avatar">🛵</div>
+        <div>
+          <div class="rider-name">89ers Rider</div>
+          <div class="rider-status"><span class="online-dot">●</span>Online</div>
+        </div>
+      </div>
+      <div class="chat-order-banner" id="chatOrderBanner">
+        <div class="chat-order-label">📋 Active Order</div>
+        <div class="chat-order-text" id="chatOrderText"></div>
+      </div>
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="msg-avatar">🛵</div>
+        <div class="typing-bubble">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-date-label"><span>Today</span></div>
+        <div class="msg-in">
+          <div class="msg-avatar">🛵</div>
+          <div>
+            <div class="bubble bubble-in">Hi! I'm your 89ers rider. Message me anytime for updates about your order. 🍽️</div>
+            <div class="msg-time">89ers Rider · just now</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-bar">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type your message…"
+               onkeypress="if(event.key==='Enter')sendChat()">
+        <button class="chat-send-btn" onclick="sendChat()" title="Send">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="bnav-btn active" id="navMenu" onclick="switchPanel('menu')">
+      <div class="bnav-icon-wrap"><span class="bnav-icon">🍽️</span></div>Menu
+    </button>
+    <button class="bnav-btn" id="navCart" onclick="switchPanel('cart')">
+      <div class="bnav-icon-wrap">
+        <span class="bnav-icon">🛒</span>
+        <div class="badge hidden" id="cartBadge">0</div>
+      </div>Cart
+    </button>
+    <button class="bnav-btn" id="navMember" onclick="switchPanel('member')">
+      <div class="bnav-icon-wrap"><span class="bnav-icon">⭐</span></div>Suki
+    </button>
+    <button class="bnav-btn" id="navChat" onclick="switchPanel('chat')">
+      <div class="bnav-icon-wrap">
+        <span class="bnav-icon">💬</span>
+        <div class="badge hidden" id="chatBadge">!</div>
+      </div>Rider
+    </button>
+  </div>
+</div>
+
+<!-- ═══ AUTH MODAL ═══ -->
+<div class="overlay" id="authModal" onclick="overlayClose(event,'authModal')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-close-row"><button class="close-btn" onclick="closeModal('authModal')">✕</button></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">Log In</button>
+      <button class="auth-tab" id="signupTab" onclick="switchAuthTab('signup')">Join Suki</button>
+    </div>
+
+    <!-- Login -->
+    <div id="loginForm">
+      <div class="sheet-title">Welcome back! 👋</div>
+      <div class="sheet-sub">Sign in to access your Suki account</div>
+      <div id="loginAlert" class="alert" style="display:none"></div>
+      <div class="form-group"><label class="form-label">Email Address</label>
+        <input type="email" id="loginEmail" class="form-input" placeholder="you@example.com"></div>
+      <div class="form-group"><label class="form-label">Password</label>
+        <input type="password" id="loginPwd" class="form-input" placeholder="••••••••"
+               onkeypress="if(event.key==='Enter')loginUser()"></div>
+      <button class="submit-btn" onclick="loginUser()">Log In</button>
+      <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--muted);">
+        Not a member? <span style="color:var(--red);cursor:pointer;font-weight:700;" onclick="switchAuthTab('signup')">Join Suki →</span>
+      </div>
+      <div class="sample-login">
+        <div class="sample-login-label">🧪 Sample Login</div>
+        <div class="sample-login-field"><strong>Email:</strong> juan@89ers.com</div>
+        <div class="sample-login-field"><strong>Password:</strong> suki1234</div>
+        <button class="fill-sample-btn" onclick="fillSample()">Use Sample Account</button>
+      </div>
+    </div>
+
+    <!-- Signup -->
+    <div id="signupForm" class="hidden">
+      <div class="perks-box">
+        <div class="perks-title">🎁 Why Join Suki Membership?</div>
+        <div class="perk"><span>💳</span> Food Wallet — load &amp; pay digitally</div>
+        <div class="perk"><span>🎟️</span> Earn raffle tickets with every order</div>
+        <div class="perk"><span>🏷️</span> Exclusive member discounts</div>
+        <div class="perk"><span>📊</span> Track your order history</div>
+      </div>
+      <div id="signupAlert" class="alert" style="display:none"></div>
+      <div id="signupSuccess" class="alert success" style="display:none"></div>
+      <div class="form-group"><label class="form-label">Full Name</label>
+        <input type="text" id="sigName" class="form-input" placeholder="Juan dela Cruz"></div>
+      <div class="form-group"><label class="form-label">Email Address</label>
+        <input type="email" id="sigEmail" class="form-input" placeholder="you@example.com"></div>
+      <div class="form-group"><label class="form-label">Mobile Number</label>
+        <input type="tel" id="sigPhone" class="form-input" placeholder="09XX XXX XXXX"></div>
+      <div class="form-group"><label class="form-label">Password</label>
+        <input type="password" id="sigPwd" class="form-input" placeholder="At least 8 characters"></div>
+      <div class="form-group"><label class="form-label">Confirm Password</label>
+        <input type="password" id="sigConfirm" class="form-input" placeholder="Repeat password"
+               onkeypress="if(event.key==='Enter')signupUser()"></div>
+      <button class="submit-btn gold" onclick="signupUser()">Create Suki Account 🎉</button>
+      <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--muted);">
+        Already a member? <span style="color:var(--red);cursor:pointer;font-weight:700;" onclick="switchAuthTab('login')">Log In →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ITEM DETAIL MODAL ═══ -->
+<div class="overlay" id="itemModal" onclick="overlayClose(event,'itemModal')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-close-row"><button class="close-btn" onclick="closeModal('itemModal')">✕</button></div>
+    <div class="item-hero" id="itemHero"><span id="itemEmoji">🍽️</span></div>
+    <div class="item-name" id="itemName"></div>
+    <div class="item-price" id="itemPrice"></div>
+    <div class="item-desc" id="itemDesc"></div>
+    <div class="qty-control">
+      <button class="qty-btn-lg" onclick="changeItemQty(-1)">−</button>
+      <div class="qty-num-lg" id="itemQtyDisplay">1</div>
+      <button class="qty-btn-lg" onclick="changeItemQty(1)">+</button>
+    </div>
+    <button class="submit-btn" id="addToCartBtn" onclick="addCurrentItemToCart()">Add to Order — ₱0.00</button>
+  </div>
+</div>
+
+<!-- ═══ RELOAD MODAL ═══ -->
+<div class="overlay" id="reloadModal" onclick="overlayClose(event,'reloadModal')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-close-row"><button class="close-btn" onclick="closeModal('reloadModal')">✕</button></div>
+    <div class="gcash-badge">G<span style="color:#00E5FF">C</span>ash</div>
+    <div class="sheet-title">Reload Food Wallet</div>
+    <div class="gcash-number-box">
+      <div class="gcash-box-label">Send GCash payment to:</div>
+      <div class="gcash-box-number">0917 – 555 – 8989</div>
+      <div class="gcash-box-name">89ers Online Diner</div>
+    </div>
+    <div class="reload-step"><div class="step-num">1</div><div class="step-text">Open your <strong>GCash app</strong> and send money to <strong>0917-555-8989</strong> (89ers Online Diner).</div></div>
+    <div class="reload-step"><div class="step-num">2</div><div class="step-text">Choose your reload amount:</div></div>
+    <div class="amount-grid" id="amountGrid">
+      <button class="amount-btn" onclick="selectAmt(this,'50')">₱50</button>
+      <button class="amount-btn" onclick="selectAmt(this,'100')">₱100</button>
+      <button class="amount-btn" onclick="selectAmt(this,'200')">₱200</button>
+      <button class="amount-btn" onclick="selectAmt(this,'300')">₱300</button>
+      <button class="amount-btn" onclick="selectAmt(this,'500')">₱500</button>
+      <button class="amount-btn" onclick="selectAmt(this,'1000')">₱1,000</button>
+    </div>
+    <div class="reload-step"><div class="step-num">3</div><div class="step-text">Paste your <strong>GCash reference number</strong> below and submit. We'll reload your wallet within <strong>30 minutes</strong>.</div></div>
+    <div class="form-group">
+      <input type="text" id="gcashRef" class="form-input" placeholder="GCash Reference No. (e.g. 1234567890)" maxlength="30">
+    </div>
+    <div id="reloadAlert" class="alert" style="display:none"></div>
+    <button class="submit-btn gold" onclick="submitReload()">📨 Submit Reload Request</button>
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:12px;">Wallet will be reloaded within 30 mins after admin verification.</div>
+  </div>
+</div>
+
+<!-- ═══ ORDER SUCCESS MODAL ═══ -->
+<div class="overlay" id="successModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="order-success-content">
+      <div class="success-animation">🎉</div>
+      <div class="success-title">Order Placed!</div>
+      <div class="success-sub" id="successMsg">Your order has been received. We'll start preparing it right away!</div>
+      <div class="order-ref" id="orderRefDisplay"></div>
+      <button class="submit-btn" onclick="closeModal('successModal');switchPanel('chat')">💬 Chat with Rider</button>
+      <button class="submit-btn" style="background:var(--light);color:var(--dark);margin-top:10px;box-shadow:none;" onclick="closeModal('successModal');switchPanel('menu')">Continue Ordering</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+var menuItems       = [];
+var cart            = [];
+var currentCat      = 'all';
+var currentUser     = null;
+var selectedItem    = null;
+var itemQty         = 1;
+var selectedPayment = '';
+var selectedDeliveryFee = 0;
+var chatSessionId   = 'session_' + Date.now();
+var chatLastId      = 0;
+var chatPollTimer   = null;
+var carouselIdx     = 0;
+var carouselTimer   = null;
+
+var CATS = {
+  maindish:  { label: '🍛 Main Dish',       sub: 'Hearty Filipino main courses',    emoji: '🍛' },
+  beverages: { label: '🧊 Beverages',        sub: 'Hot, cold & refreshing drinks',   emoji: '🧊' },
+  breakfast: { label: '🍳 Breakfast',        sub: 'Start your day right',            emoji: '🍳' },
+  merienda:  { label: '🍲 Merienda',         sub: 'Afternoon snack favorites',       emoji: '🍲' },
+  breads:    { label: '🍞 Breads & Pastries', sub: 'Freshly baked goodness',         emoji: '🍞' }
+};
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+window.onload = function() {
+  // background image
+  try {
+    var bgUrl = 'https://lh3.googleusercontent.com/d/1SPqpciAjMzBQTOjBXQCkC9Y6aXHZsgIO';
+    if (bgUrl) {
+      var el = document.getElementById('landingBgImg');
+      el.style.backgroundImage = 'url(' + bgUrl + ')';
+      var img = new Image();
+      img.onload = function() { el.classList.add('loaded'); };
+      img.src = bgUrl;
+    }
+  } catch(e) {}
+
+  setTimeout(function() {
+    var ls = document.getElementById('loadingScreen');
+    var lp = document.getElementById('landingPage');
+    ls.style.opacity = '0';
+    setTimeout(function() {
+      ls.style.display = 'none';
+      lp.classList.remove('hidden');
+      initCarousel();
+    }, 500);
+  }, 1200);
+
+  try { loadMenu(); }     catch(e) {}
+  try { restoreSession(); } catch(e) {}
+};
+
+// ═══════════════════════════════════════════
+//  CAROUSEL
+// ═══════════════════════════════════════════
+function initCarousel() {
+  var slides = document.querySelectorAll('.carousel-slide');
+  var dotsEl = document.getElementById('carouselDots');
+  if (!slides.length || !dotsEl) return;
+  dotsEl.innerHTML = '';
+  slides.forEach(function(_, i) {
+    var d = document.createElement('button');
+    d.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    d.onclick = function() { goCarousel(i); };
+    dotsEl.appendChild(d);
+  });
+  carouselTimer = setInterval(function() { goCarousel((carouselIdx + 1) % slides.length); }, 4000);
+}
+function goCarousel(idx) {
+  var slides = document.querySelectorAll('.carousel-slide');
+  var dots   = document.querySelectorAll('.carousel-dot');
+  if (!slides.length) return;
+  slides[carouselIdx].classList.remove('active');
+  if (dots[carouselIdx]) dots[carouselIdx].classList.remove('active');
+  carouselIdx = (idx + slides.length) % slides.length;
+  slides[carouselIdx].classList.add('active');
+  if (dots[carouselIdx]) dots[carouselIdx].classList.add('active');
+}
+function carouselNext() { clearInterval(carouselTimer); goCarousel(carouselIdx + 1); carouselTimer = setInterval(function(){goCarousel(carouselIdx+1);},4000); }
+function carouselPrev() { clearInterval(carouselTimer); goCarousel(carouselIdx - 1); carouselTimer = setInterval(function(){goCarousel(carouselIdx+1);},4000); }
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+function openDashboard() {
+  document.getElementById('landingPage').classList.add('hidden');
+  var d = document.getElementById('dashboard');
+  d.style.display = 'flex';
+  d.style.flexDirection = 'column';
+  switchPanel('menu');
+  renderMenu();
+}
+function backToLanding() {
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('landingPage').classList.remove('hidden');
+}
+function switchPanel(panel) {
+  var panels = ['menu','cart','member','chat'];
+  panels.forEach(function(p) {
+    document.getElementById(p + 'Panel').classList.remove('active');
+    var nb = document.getElementById('nav' + p.charAt(0).toUpperCase() + p.slice(1));
+    if (nb) nb.classList.remove('active');
+  });
+  document.getElementById(panel + 'Panel').classList.add('active');
+  var activeNav = document.getElementById('nav' + panel.charAt(0).toUpperCase() + panel.slice(1));
+  if (activeNav) activeNav.classList.add('active');
+
+  var toolbar = document.getElementById('catToolbar');
+  if (toolbar) toolbar.style.display = panel === 'menu' ? 'flex' : 'none';
+
+  if (panel === 'cart')   { renderCart(); setTimeout(autoFillMember, 80); }
+  if (panel === 'member') { renderMemberPanel(); }
+  if (panel === 'chat')   {
+    document.getElementById('chatBadge').classList.add('hidden');
+    requestAnimationFrame(function() { requestAnimationFrame(scrollChatBottom); });
+    startChatPoll();
+  }
+}
+function filterCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(function(t) { t.classList.remove('active'); });
+  btn.classList.add('active');
+  renderMenu();
+}
+
+// ═══════════════════════════════════════════
+//  MENU
+// ═══════════════════════════════════════════
+function loadMenu() {
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.items) {
+        menuItems = res.items;
+        renderMenu();
+      }
+    })
+    .withFailureHandler(function() {
+      document.getElementById('menuContent').innerHTML =
+        '<div class="no-items" style="padding:60px;color:var(--muted);">⚠️ Could not load menu. Please refresh.</div>';
+    })
+    .getMenuItems();
+}
+
+function renderMenu() {
+  var container = document.getElementById('menuContent');
+  if (!container) return;
+  var cats = currentCat === 'all' ? Object.keys(CATS) : [currentCat];
+  var html = '';
+
+  // Build a global lookup map so onclick can reference by index safely
+  // — avoids all JSON-in-attribute quoting bugs
+  window._menuMap = {};
+  menuItems.forEach(function(item, idx) {
+    window._menuMap[idx] = item;
+    item._idx = idx;
+  });
+
+  cats.forEach(function(cat) {
+    var items = menuItems.filter(function(i) { return i.category === cat; });
+    var info  = CATS[cat];
+    html += '<div class="category-section" id="cat-' + cat + '">';
+    html += '<div class="cat-section-header">';
+    html += '<div class="cat-section-title">' + info.label + '</div>';
+    html += '<div class="cat-section-sub">' + info.sub + '</div>';
+    html += '</div>';
+    if (!items.length) {
+      html += '<div class="no-items">No items yet. Check back soon!</div>';
+    } else {
+      html += '<div class="menu-grid">';
+      items.forEach(function(item) {
+        var idx     = item._idx;
+        var imgHtml = item.imageUrl
+          ? '<img src="' + esc(item.imageUrl) + '" alt="' + esc(item.name) + '" loading="lazy" onerror="this.style.display=\'none\'">'
+          : '<span style="font-size:40px;line-height:1">' + info.emoji + '</span>';
+        html += '<div class="menu-card" onclick="_openItemByIdx(' + idx + ')">';
+        html += '<div class="menu-card-img">' + imgHtml;
+        if (!item.available) html += '<div class="unavailable-overlay">Sold Out</div>';
+        html += '</div>';
+        html += '<div class="menu-card-body">';
+        html += '<div class="menu-card-name">' + esc(item.name) + '</div>';
+        html += '<div class="menu-card-desc">' + esc(item.description || '') + '</div>';
+        html += '<div class="menu-card-footer">';
+        html += '<div class="menu-card-price">₱' + fmt(item.price) + '</div>';
+        if (item.available !== false) {
+          html += '<button class="add-btn" onclick="event.stopPropagation();_quickAddByIdx(' + idx + ')">+</button>';
+        }
+        html += '</div></div></div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+
+  container.innerHTML = html || '<div class="no-items">No items found.</div>';
+}
+
+// Safe wrappers — look up item from map, never from inline JSON
+function _openItemByIdx(idx) { openItem(window._menuMap[idx]); }
+function _quickAddByIdx(idx) { quickAdd(window._menuMap[idx]); }
+
+// ═══════════════════════════════════════════
+//  ITEM DETAIL MODAL
+// ═══════════════════════════════════════════
+function openItem(item) {
+  if (!item.available) { showToast('Sorry, this item is currently unavailable.'); return; }
+  selectedItem = item;
+  itemQty = 1;
+
+  var heroEl = document.getElementById('itemHero');
+  var imgEl  = heroEl.querySelector('img');
+  var emojiEl = document.getElementById('itemEmoji');
+
+  heroEl.style.fontSize = '';
+  if (imgEl) { heroEl.removeChild(imgEl); }
+
+  if (item.imageUrl) {
+    var img = document.createElement('img');
+    img.src = item.imageUrl;
+    img.alt = item.name;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    img.onerror = function() {
+      this.style.display = 'none';
+      emojiEl.style.display = 'block';
+    };
+    emojiEl.style.display = 'none';
+    heroEl.insertBefore(img, emojiEl);
+  } else {
+    emojiEl.textContent = CATS[item.category] ? CATS[item.category].emoji : '🍽️';
+    emojiEl.style.display = 'block';
+  }
+
+  document.getElementById('itemName').textContent   = item.name;
+  document.getElementById('itemPrice').textContent  = '₱' + fmt(item.price);
+  document.getElementById('itemDesc').textContent   = item.description || '';
+  document.getElementById('itemQtyDisplay').textContent = '1';
+  document.getElementById('addToCartBtn').textContent = 'Add to Order — ₱' + fmt(item.price);
+  openModal('itemModal');
+}
+function changeItemQty(delta) {
+  if (!selectedItem) return;
+  itemQty = Math.max(1, itemQty + delta);
+  document.getElementById('itemQtyDisplay').textContent = itemQty;
+  document.getElementById('addToCartBtn').textContent =
+    'Add to Order — ₱' + fmt(selectedItem.price * itemQty);
+}
+function addCurrentItemToCart() {
+  if (!selectedItem) return;
+  addToCart(selectedItem, itemQty);
+  closeModal('itemModal');
+}
+function quickAdd(item) {
+  if (!item.available) { showToast('Sorry, this item is sold out.'); return; }
+  addToCart(item, 1);
+}
+
+// ═══════════════════════════════════════════
+//  CART
+// ═══════════════════════════════════════════
+function addToCart(item, qty) {
+  var existing = cart.find(function(c) { return c.id === item.id; });
+  if (existing) { existing.qty += qty; }
+  else { cart.push({ id: item.id, name: item.name, category: item.category, price: item.price, imageUrl: item.imageUrl || '', qty: qty }); }
+  updateCartBadge();
+  showToast(item.name + ' added to cart 🛒');
+}
+function removeFromCart(id) {
+  cart = cart.filter(function(c) { return c.id !== id; });
+  updateCartBadge();
+  renderCart();
+  updateSummary();
+}
+function updateQty(id, delta) {
+  var item = cart.find(function(c) { return c.id === id; });
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  renderCart();
+  updateSummary();
+}
+function updateCartBadge() {
+  var total = cart.reduce(function(s, c) { return s + c.qty; }, 0);
+  var badge = document.getElementById('cartBadge');
+  badge.textContent = total;
+  badge.classList.toggle('hidden', total === 0);
+}
+function renderCart() {
+  var wrap    = document.getElementById('cartItems');
+  var empty   = document.getElementById('cartEmpty');
+  var summary = document.getElementById('orderSummary');
+  if (!wrap) return;
+
+  if (!cart.length) {
+    empty.style.display   = 'flex';
+    summary.classList.add('hidden');
+    wrap.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+  summary.classList.remove('hidden');
+
+  var html = '';
+  cart.forEach(function(c) {
+    var img = c.imageUrl
+      ? '<img src="' + esc(c.imageUrl) + '" alt="' + esc(c.name) + '" loading="lazy" onerror="this.style.display=\'none\'">'
+      : '<span>' + (CATS[c.category] ? CATS[c.category].emoji : '🍽️') + '</span>';
+    html += '<div class="cart-item">';
+    html += '<div class="cart-item-thumb">' + img + '</div>';
+    html += '<div class="cart-item-info">';
+    html += '<div class="cart-item-name">' + esc(c.name) + '</div>';
+    html += '<div class="cart-item-unit">₱' + fmt(c.price) + ' each</div>';
+    html += '<div class="cart-item-controls">';
+    html += '<button class="qty-btn" onclick="updateQty(\'' + c.id + '\',-1)">−</button>';
+    html += '<span class="qty-num">' + c.qty + '</span>';
+    html += '<button class="qty-btn" onclick="updateQty(\'' + c.id + '\',1)">+</button>';
+    html += '</div></div>';
+    html += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">';
+    html += '<div class="cart-item-total">₱' + fmt(c.price * c.qty) + '</div>';
+    html += '<button class="remove-btn" onclick="removeFromCart(\'' + c.id + '\')">🗑</button>';
+    html += '</div></div>';
+  });
+  wrap.innerHTML = html;
+  updateSummary();
+}
+function updateSummary() {
+  var subtotal = cart.reduce(function(s,c) { return s + c.price * c.qty; }, 0);
+  document.getElementById('sumSubtotal').textContent = '₱' + fmt(subtotal);
+  document.getElementById('sumTotal').textContent    = '₱' + fmt(subtotal);
+}
+function updateDelivery() {
+  var sel    = document.getElementById('deliveryPoint');
+  var opt    = sel.options[sel.selectedIndex];
+  var banner = document.getElementById('deliveryBanner');
+  if (!opt || !opt.value) { banner.classList.remove('show'); selectedDeliveryFee = 0; updateSummary(); return; }
+  selectedDeliveryFee = 0; // Always FREE
+  document.getElementById('deliveryAreaName').textContent = opt.text;
+  document.getElementById('deliveryFeeAmt').textContent   = 'FREE';
+  banner.classList.add('show');
+  updateSummary();
+}
+function selectPayment(method, btn) {
+  selectedPayment = method;
+  document.getElementById('paymentMethod').value = method;
+  document.querySelectorAll('.pay-option').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  var gcashBox = document.getElementById('gcashInstructions');
+  if (method === 'gcash') {
+    gcashBox.style.display = 'block';
+    var total = cart.reduce(function(s,c) { return s + c.price * c.qty; }, 0);
+    document.getElementById('gcashAmountLabel').textContent = '₱' + fmt(total);
+  } else {
+    gcashBox.style.display = 'none';
+    document.getElementById('gcashRefCart').value = '';
+  }
+}
+function autoFillMember() {
+  if (!currentUser) return;
+  var nameEl  = document.getElementById('custName');
+  var phoneEl = document.getElementById('contactNum');
+  var badge   = document.getElementById('autoFillBadge');
+  if (nameEl  && !nameEl.value)  nameEl.value  = currentUser.name  || '';
+  if (phoneEl && !phoneEl.value) phoneEl.value = currentUser.phone || '';
+  if (badge) badge.classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════
+//  PLACE ORDER
+// ═══════════════════════════════════════════
+function placeOrder() {
+  if (!cart.length) { showToast('Your cart is empty!'); return; }
+
+  var delivArea = document.getElementById('deliveryPoint').value;
+  var custName  = document.getElementById('custName').value.trim();
+  var messenger = document.getElementById('messengerName').value.trim();
+  var contact   = document.getElementById('contactNum').value.trim();
+  var payment   = selectedPayment;
+
+  if (!delivArea) { showToast('Please select a delivery area.'); return; }
+  if (!custName)  { showToast('Please enter your full name.'); return; }
+  if (!messenger) { showToast('Please enter your Messenger name.'); return; }
+  if (!contact)   { showToast('Please enter your contact number.'); return; }
+  if (!payment)   { showToast('Please select a payment method.'); return; }
+
+  var gcashRef = '';
+  if (payment === 'gcash') {
+    gcashRef = document.getElementById('gcashRefCart').value.trim();
+    if (!gcashRef) { showToast('Please enter your GCash reference number.'); document.getElementById('gcashRefCart').focus(); return; }
+  }
+
+  if (payment === 'wallet' && !currentUser) { showToast('Log in to pay with Food Wallet.'); return; }
+
+  var subtotal  = cart.reduce(function(s,c) { return s + c.price * c.qty; }, 0);
+  var delivFee  = 0; // Always FREE
+  var total     = subtotal;
+
+  if (payment === 'wallet' && currentUser && currentUser.walletBalance < total) {
+    showToast('Insufficient wallet balance (₱' + fmt(currentUser.walletBalance) + ' available).'); return;
+  }
+
+  var orderData = {
+    customerId:          currentUser ? currentUser.id : '',
+    customerName:        custName,
+    messengerName:       messenger,
+    contactNumber:       contact,
+    deliveryPoint:       delivArea,
+    deliveryTime:        document.getElementById('deliveryTime').value,
+    paymentMethod:       payment,
+    gcashReference:      gcashRef,
+    subtotal:            subtotal,
+    deliveryFee:         delivFee,
+    total:               total,
+    specialInstructions: document.getElementById('specialInst').value,
+    items: cart.map(function(c) { return { id: c.id, name: c.name, category: c.category, price: c.price, qty: c.qty }; })
+  };
+
+  var btn = document.querySelector('.place-order-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Placing order…';
+
+  // send order summary to chat
+  var summary = '📋 New Order\n';
+  cart.forEach(function(c) { summary += '• ' + c.name + ' x' + c.qty + ' — ₱' + fmt(c.price * c.qty) + '\n'; });
+  summary += '─────────────\n';
+  summary += 'Subtotal: ₱' + fmt(subtotal) + '\n';
+  summary += 'Delivery: FREE\n';
+  summary += 'TOTAL: ₱' + fmt(total) + '\n';
+  summary += 'Area: ' + delivArea + '\n';
+  summary += 'Payment: ' + payment.toUpperCase();
+  if (gcashRef) summary += '\nGCash Ref: ' + gcashRef;
+  summary += 'Payment: ' + payment.toUpperCase();
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false;
+      btn.textContent = '🚚 Place Delivery Order';
+      if (!res || !res.success) { showToast(res ? res.message : 'Order failed. Try again.'); return; }
+
+      // show success modal
+      document.getElementById('orderRefDisplay').textContent = res.orderId;
+      document.getElementById('successMsg').textContent =
+        'Your order has been placed! ' +
+        (payment === 'cash' ? 'Please prepare ₱' + fmt(total) + ' for cash on delivery.' :
+         payment === 'wallet' ? 'Payment deducted from your Food Wallet.' :
+         'GCash ref #' + gcashRef + ' received. We will verify your payment shortly.');
+      openModal('successModal');
+
+      // send to chat
+      try {
+        google.script.run.saveChatMessage({
+          sessionId: chatSessionId, sender: 'customer',
+          senderName: custName, text: summary, isOrder: true
+        });
+      } catch(e) {}
+
+      document.getElementById('chatOrderBanner').classList.add('show');
+      document.getElementById('chatOrderText').textContent = res.orderId + ' — ₱' + fmt(total);
+
+      // update wallet display
+      if (payment === 'wallet' && currentUser) {
+        currentUser.walletBalance = (currentUser.walletBalance || 0) - total;
+        updateMemberUI();
+      }
+
+      // reset cart
+      cart = [];
+      selectedPayment = '';
+      selectedDeliveryFee = 0;
+      document.querySelectorAll('.pay-option').forEach(function(b) { b.classList.remove('active'); });
+      document.getElementById('paymentMethod').value = '';
+      document.getElementById('deliveryPoint').value = '';
+      document.getElementById('deliveryBanner').classList.remove('show');
+      document.getElementById('gcashRefCart').value = '';
+      document.getElementById('gcashInstructions').style.display = 'none';
+      updateCartBadge();
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.textContent = '🚚 Place Delivery Order';
+      showToast('Order failed: ' + (err.message || 'Server error'));
+    })
+    .placeOrder(orderData);
+}
+
+// ═══════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════
+function openAuthModal(tab) {
+  switchAuthTab(tab);
+  document.getElementById('loginAlert').style.display = 'none';
+  document.getElementById('signupAlert').style.display = 'none';
+  document.getElementById('signupSuccess').style.display = 'none';
+  openModal('authModal');
+}
+function switchAuthTab(tab) {
+  document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+  document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
+  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
+}
+function fillSample() {
+  document.getElementById('loginEmail').value = 'juan@89ers.com';
+  document.getElementById('loginPwd').value   = 'suki1234';
+}
+function loginUser() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pwd   = document.getElementById('loginPwd').value;
+  var alert = document.getElementById('loginAlert');
+  if (!email || !pwd) { showAlert(alert, 'error', 'Please fill in all fields.'); return; }
+
+  alert.style.display = 'none';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res || !res.success) { showAlert(alert, 'error', res ? res.message : 'Login failed.'); return; }
+      currentUser = res.member;
+      sessionStorage.setItem('89ers_user', JSON.stringify(currentUser));
+      closeModal('authModal');
+      updateMemberUI();
+      showToast('Welcome back, ' + currentUser.name + '! 👋');
+    })
+    .withFailureHandler(function() { showAlert(alert, 'error', 'Login error. Please try again.'); })
+    .loginSuki(email, pwd);
+}
+function signupUser() {
+  var name    = document.getElementById('sigName').value.trim();
+  var email   = document.getElementById('sigEmail').value.trim();
+  var phone   = document.getElementById('sigPhone').value.trim();
+  var pwd     = document.getElementById('sigPwd').value;
+  var confirm = document.getElementById('sigConfirm').value;
+  var errEl   = document.getElementById('signupAlert');
+  var okEl    = document.getElementById('signupSuccess');
+
+  errEl.style.display = 'none'; okEl.style.display = 'none';
+
+  if (!name || !email || !pwd) { showAlert(errEl, 'error', 'Name, email, and password are required.'); return; }
+  if (pwd.length < 8)           { showAlert(errEl, 'error', 'Password must be at least 8 characters.'); return; }
+  if (pwd !== confirm)          { showAlert(errEl, 'error', 'Passwords do not match.'); return; }
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res || !res.success) { showAlert(errEl, 'error', res ? res.message : 'Signup failed.'); return; }
+      showAlert(okEl, 'success', 'Account created! You can now log in. 🎉');
+      setTimeout(function() { switchAuthTab('login'); }, 1800);
+    })
+    .withFailureHandler(function() { showAlert(errEl, 'error', 'Signup error. Please try again.'); })
+    .signupSuki({ name: name, email: email, phone: phone, password: pwd });
+}
+function logoutUser() {
+  currentUser = null;
+  sessionStorage.removeItem('89ers_user');
+  updateMemberUI();
+  showToast('Signed out. See you soon! 👋');
+  if (document.getElementById('memberPanel').classList.contains('active')) switchPanel('menu');
+}
+function restoreSession() {
+  try {
+    var saved = sessionStorage.getItem('89ers_user');
+    if (saved) { currentUser = JSON.parse(saved); updateMemberUI(); }
+  } catch(e) {}
+}
+function updateMemberUI() {
+  var guestHdr  = document.getElementById('guestHeader');
+  var memberHdr = document.getElementById('memberHeader');
+  var hdrWallet = document.getElementById('hdrWallet');
+  var hdrName   = document.getElementById('hdrMemberName');
+  if (currentUser) {
+    guestHdr.classList.add('hidden');
+    memberHdr.classList.remove('hidden');
+    hdrWallet.textContent = fmt(currentUser.walletBalance || 0);
+    hdrName.textContent   = '⭐ ' + currentUser.name;
+  } else {
+    guestHdr.classList.remove('hidden');
+    memberHdr.classList.add('hidden');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  MEMBER PANEL
+// ═══════════════════════════════════════════
+function renderMemberPanel() {
+  var container = document.getElementById('memberPanelContent');
+  if (!currentUser) {
+    container.innerHTML = '<div class="members-only">' +
+      '<div class="members-only-icon">🔐</div>' +
+      '<div class="sheet-title">Members Only</div>' +
+      '<div style="font-size:14px;color:var(--muted);max-width:260px;margin:0 auto;">Log in or sign up as a Suki member to access your wallet, points and exclusive perks.</div>' +
+      '<button class="submit-btn gold" style="width:auto;padding:12px 28px;margin-top:16px;" onclick="openAuthModal(\'signup\')">Join Suki — It\'s Free!</button>' +
+      '</div>';
+    return;
+  }
+
+  // Refresh member data from server
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.member) {
+        currentUser = res.member;
+        sessionStorage.setItem('89ers_user', JSON.stringify(currentUser));
+        updateMemberUI();
+      }
+      buildMemberPanel();
+    })
+    .withFailureHandler(function() { buildMemberPanel(); })
+    .loginSuki(currentUser.email, '__session__');
+
+  buildMemberPanel();
+}
+function buildMemberPanel() {
+  var u         = currentUser;
+  var points    = parseInt(u.points) || 0;
+  var tickets   = parseInt(u.raffleTickets) || 0;
+  var balance   = parseFloat(u.walletBalance) || 0;
+  var nextMile  = Math.ceil(points / 100) * 100;
+  if (nextMile === points) nextMile += 100;
+  var progress  = nextMile > 0 ? Math.min(100, (points % 100)) : 0;
+
+  var html = '<div class="mem-hero">' +
+    '<div class="mem-hero-top">' +
+    '<div>' +
+      '<div class="mem-wallet-label">Food Wallet Balance</div>' +
+      '<div class="mem-wallet-amount">₱' + fmt(balance) + '</div>' +
+      '<div class="mem-wallet-sub">Available to spend</div>' +
+    '</div>' +
+    '<div>' +
+      '<div class="mem-name">' + esc(u.name) + '</div>' +
+      '<div class="mem-since">Member since ' + (u.joinedAt || '').split(',')[0] + '</div>' +
+      '<div class="suki-badge">⭐ Suki Member</div>' +
+    '</div></div>' +
+    '<div class="mem-hero-stats">' +
+    '<div class="mem-stat" onclick="openModal(\'reloadModal\')">' +
+      '<div class="mem-stat-icon">💳</div>' +
+      '<div class="mem-stat-label">Reload</div>' +
+      '<div class="mem-stat-val">+₱</div>' +
+    '</div>' +
+    '<div class="mem-stat">' +
+      '<div class="mem-stat-icon">🏆</div>' +
+      '<div class="mem-stat-label">Points</div>' +
+      '<div class="mem-stat-val">' + points + '</div>' +
+    '</div>' +
+    '<div class="mem-stat">' +
+      '<div class="mem-stat-icon">🎟️</div>' +
+      '<div class="mem-stat-label">Tickets</div>' +
+      '<div class="mem-stat-val">' + tickets + '</div>' +
+    '</div></div></div>';
+
+  html += '<div class="mem-body">';
+
+  // Points card
+  html += '<div class="points-card">' +
+    '<div class="points-card-header"><div class="points-card-title">🏆 Loyalty Points</div><div class="points-count">' + points + ' pts</div></div>' +
+    '<div class="progress-track"><div class="progress-bar" style="width:' + progress + '%"></div></div>' +
+    '<div class="progress-labels"><span>' + (Math.floor(points/100)*100) + ' pts</span><span>' + nextMile + ' pts</span></div>' +
+    '<div class="next-reward">' +
+      '<div class="next-reward-icon">🎁</div>' +
+      '<div><div class="next-reward-text">' + (nextMile - points) + ' more points to your next reward!</div>' +
+      '<div class="next-reward-sub">Earn 1 point per ₱1 spent on any order.</div></div>' +
+    '</div></div>';
+
+  // Raffle card
+  html += '<div class="raffle-card">' +
+    '<div class="raffle-title">🎟️ Raffle Draw</div>' +
+    '<div class="raffle-sub">Win exciting prizes every draw period!</div>' +
+    '<div class="raffle-count">' + tickets + '</div>' +
+    '<div class="raffle-count-label">Raffle Tickets</div>' +
+    '<div class="raffle-info">' +
+      '<div class="raffle-info-title">How to Earn Tickets</div>' +
+      '<div class="raffle-info-item">🛒 Every ₱50 spent = 1 raffle ticket</div>' +
+      '<div class="raffle-info-item">📅 Draws are held every month</div>' +
+      '<div class="raffle-info-item">🏆 Winner announced on Facebook page</div>' +
+    '</div></div>';
+
+  // Quick actions
+  html += '<div class="quick-actions">' +
+    '<button class="quick-action-btn" onclick="openModal(\'reloadModal\')">' +
+      '<div class="qa-icon">💳</div>' +
+      '<div class="qa-label">Reload Wallet</div>' +
+      '<div class="qa-sub">Via GCash</div>' +
+    '</button>' +
+    '<button class="quick-action-btn" onclick="switchPanel(\'menu\')">' +
+      '<div class="qa-icon">🍽️</div>' +
+      '<div class="qa-label">Order Now</div>' +
+      '<div class="qa-sub">Browse the menu</div>' +
+    '</button>' +
+    '<button class="quick-action-btn" onclick="switchPanel(\'chat\')">' +
+      '<div class="qa-icon">💬</div>' +
+      '<div class="qa-label">Chat Rider</div>' +
+      '<div class="qa-sub">Track your order</div>' +
+    '</button>' +
+    '<button class="quick-action-btn" onclick="logoutUser()">' +
+      '<div class="qa-icon">🚪</div>' +
+      '<div class="qa-label">Sign Out</div>' +
+      '<div class="qa-sub">See you soon!</div>' +
+    '</button></div>';
+
+  html += '</div>';
+  document.getElementById('memberPanelContent').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+//  RELOAD WALLET
+// ═══════════════════════════════════════════
+var selectedReloadAmt = '';
+function selectAmt(btn, amt) {
+  selectedReloadAmt = amt;
+  document.querySelectorAll('.amount-btn').forEach(function(b) { b.classList.remove('sel'); });
+  btn.classList.add('sel');
+}
+function submitReload() {
+  if (!currentUser) { showToast('Please log in first.'); return; }
+  var ref   = document.getElementById('gcashRef').value.trim();
+  var alert = document.getElementById('reloadAlert');
+  if (!selectedReloadAmt) { showAlert(alert, 'error', 'Please select a reload amount.'); return; }
+  if (!ref) { showAlert(alert, 'error', 'Please enter your GCash reference number.'); return; }
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      closeModal('reloadModal');
+      showToast(res && res.message ? res.message : 'Reload request submitted! ✅');
+      document.getElementById('gcashRef').value = '';
+      selectedReloadAmt = '';
+      document.querySelectorAll('.amount-btn').forEach(function(b) { b.classList.remove('sel'); });
+    })
+    .withFailureHandler(function() { showAlert(alert, 'error', 'Error submitting request. Try again.'); })
+    .submitReloadRequest({ memberId: currentUser.id, memberName: currentUser.name, amount: selectedReloadAmt, gcashRef: ref });
+}
+
+// ═══════════════════════════════════════════
+//  CHAT
+// ═══════════════════════════════════════════
+function sendChat() {
+  var input = document.getElementById('chatInput');
+  var text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  appendChatBubble({ sender: 'customer', text: text, ts: Date.now() });
+
+  google.script.run
+    .withSuccessHandler(function() { startChatPoll(); })
+    .withFailureHandler(function() {})
+    .saveChatMessage({
+      sessionId:  chatSessionId,
+      sender:     'customer',
+      senderName: currentUser ? currentUser.name : 'Customer',
+      text:       text,
+      isOrder:    false
+    });
+
+  // simulate rider typing indicator
+  setTimeout(function() {
+    document.getElementById('typingIndicator').classList.add('show');
+    scrollChatBottom();
+  }, 800);
+  setTimeout(function() {
+    document.getElementById('typingIndicator').classList.remove('show');
+  }, 3500);
+}
+function appendChatBubble(msg) {
+  var container = document.getElementById('chatMessages');
+  var div = document.createElement('div');
+  var isMe = msg.sender === 'customer';
+  div.className = isMe ? 'msg-out' : 'msg-in';
+  var timeStr = new Date(msg.ts || Date.now()).toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit' });
+  if (isMe) {
+    div.innerHTML = '<div style="max-width:75%"><div class="bubble bubble-out' + (msg.isOrder ? ' bubble-order' : '') + '">' + esc(msg.text) + '</div>' +
+      '<div class="msg-time" style="text-align:right">You · ' + timeStr + '</div></div>';
+  } else {
+    div.innerHTML = '<div class="msg-avatar">🛵</div><div style="max-width:75%"><div class="bubble bubble-in">' + esc(msg.text) + '</div>' +
+      '<div class="msg-time">89ers Rider · ' + timeStr + '</div></div>';
+  }
+  container.appendChild(div);
+  scrollChatBottom();
+}
+function scrollChatBottom() {
+  var el = document.getElementById('chatMessages');
+  if (el) el.scrollTop = el.scrollHeight;
+}
+function startChatPoll() {
+  if (chatPollTimer) return;
+  chatPollTimer = setInterval(pollChat, 4000);
+}
+function pollChat() {
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res || !res.messages || !res.messages.length) return;
+      res.messages.forEach(function(msg) {
+        if (msg.id > chatLastId) {
+          chatLastId = msg.id;
+          if (msg.sender !== 'customer') {
+            appendChatBubble(msg);
+            if (!document.getElementById('chatPanel').classList.contains('active')) {
+              document.getElementById('chatBadge').classList.remove('hidden');
+            }
+          }
+        }
+      });
+    })
+    .withFailureHandler(function() {})
+    .getChatMessages(chatSessionId, chatLastId);
+}
+
+// ═══════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function overlayClose(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+
+// ═══════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════
+function fmt(n) { return parseFloat(n || 0).toFixed(2); }
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+function showAlert(el, type, msg) {
+  el.className = 'alert ' + type;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ═══════════════════════════════════════════
+//  PWA — SERVICE WORKER + INSTALL
+// ═══════════════════════════════════════════
+var deferredInstallPrompt = null;
+var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+var isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
+                      || window.navigator.standalone === true;
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg) { console.log('89ers SW:', reg.scope); })
+      .catch(function(e)  { console.log('SW failed:', e); });
+  });
+}
+
+// Capture the install prompt immediately
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+
+  // Show landing install button
+  var btn = document.getElementById('landingInstallBtn');
+  if (btn) btn.style.display = 'block';
+
+  // Show floating install banner right away (not after 30s)
+  showInstallBanner();
+});
+
+// After install — hide everything
+window.addEventListener('appinstalled', function() {
+  deferredInstallPrompt = null;
+  hideInstallUI();
+  showToast('89ers Diner installed! 🎉 Check your home screen.');
+});
+
+// On load — decide what to show
+window.addEventListener('load', function() {
+  if (isInStandaloneMode) return; // already installed, show nothing
+
+  if (isIOS) {
+    // iOS can't use beforeinstallprompt — show manual instructions
+    var hint = document.getElementById('iosInstallHint');
+    if (hint) hint.style.display = 'block';
+    // Also show iOS sheet after 4s
+    setTimeout(showIOSSheet, 4000);
+  }
+  // Android/Chrome: banner fires via beforeinstallprompt above
+});
+
+function showInstallBanner() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'flex';
+}
+function hideInstallUI() {
+  ['installBanner','landingInstallBtn','iosInstallHint'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function installApp() {
+  if (isIOS) { showIOSSheet(); return; }
+  if (!deferredInstallPrompt) {
+    showToast('Open this page in Chrome to install the app.');
+    return;
+  }
+  // Hide banner immediately so it feels snappy
+  document.getElementById('installBanner').style.display = 'none';
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(function(choice) {
+    if (choice.outcome === 'accepted') {
+      deferredInstallPrompt = null;
+      hideInstallUI();
+    } else {
+      // User dismissed — show banner again after 60s
+      setTimeout(showInstallBanner, 60000);
+    }
+  });
+}
+
+function dismissInstall() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  // Offer again after 2 minutes
+  setTimeout(showInstallBanner, 120000);
+}
+
+// iOS manual install sheet
+function showIOSSheet() {
+  if (isInStandaloneMode) return;
+  document.getElementById('iosSheet').classList.add('open');
+}
+function closeIOSSheet() {
+  document.getElementById('iosSheet').classList.remove('open');
+}
+</script>
+
+<!-- ═══ FLOATING INSTALL BANNER (Android/Chrome) ═══ -->
+<div id="installBanner" style="display:none;position:fixed;bottom:76px;left:12px;right:12px;z-index:9998;
+  background:linear-gradient(135deg,#1A0A00,#3B1800);
+  border:1.5px solid rgba(212,160,23,0.4);
+  border-radius:18px;padding:14px 16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 0 1px rgba(212,160,23,0.1);
+  align-items:center;gap:12px;animation:sheetUp 0.4s ease;">
+  <img src="icons/icon-96.png" style="width:44px;height:44px;border-radius:12px;flex-shrink:0;"
+       onerror="this.style.display='none'">
+  <div style="flex:1;min-width:0;">
+    <div style="font-weight:800;font-size:14px;color:white;line-height:1.2;">Install 89ers Diner</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:3px;">Add to home screen for faster ordering</div>
+  </div>
+  <button onclick="installApp()" style="background:linear-gradient(135deg,#D4A017,#B8860B);
+    color:#1A0A00;border:none;border-radius:10px;padding:9px 16px;
+    font-weight:800;font-size:13px;cursor:pointer;
+    font-family:'DM Sans',sans-serif;white-space:nowrap;
+    box-shadow:0 3px 10px rgba(212,160,23,0.35);">
+    Install
+  </button>
+  <button onclick="dismissInstall()" style="background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);
+    width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;">✕</button>
+</div>
+
+<!-- ═══ iOS INSTALL SHEET ═══ -->
+<div class="overlay" id="iosSheet" onclick="overlayClose(event,'iosSheet')">
+  <div class="sheet" style="text-align:center;padding-bottom:44px;">
+    <div class="sheet-handle"></div>
+    <img src="icons/icon-192.png" style="width:80px;height:80px;border-radius:22px;
+      margin:8px auto 16px;display:block;box-shadow:0 6px 20px rgba(0,0,0,0.15);"
+      onerror="this.style.display='none'">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;color:var(--dark);margin-bottom:6px;">
+      Install 89ers Diner
+    </div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6;">
+      Add this app to your home screen for a faster, fullscreen ordering experience — no App Store needed!
+    </div>
+
+    <!-- Step 1 -->
+    <div style="display:flex;align-items:flex-start;gap:14px;
+      background:var(--light);border-radius:14px;padding:16px;margin-bottom:10px;text-align:left;">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--red);
+        color:white;font-weight:800;font-size:14px;display:flex;align-items:center;
+        justify-content:center;flex-shrink:0;">1</div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--dark);">Tap the Share button</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px;">
+          Find the
+          <span style="display:inline-block;background:#007AFF;color:white;
+            border-radius:6px;padding:2px 8px;font-weight:700;font-size:12px;">
+            ↑ Share
+          </span>
+          icon at the bottom of Safari
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div style="display:flex;align-items:flex-start;gap:14px;
+      background:var(--light);border-radius:14px;padding:16px;margin-bottom:10px;text-align:left;">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--red);
+        color:white;font-weight:800;font-size:14px;display:flex;align-items:center;
+        justify-content:center;flex-shrink:0;">2</div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--dark);">Tap "Add to Home Screen"</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px;">Scroll down in the share menu and tap this option</div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div style="display:flex;align-items:flex-start;gap:14px;
+      background:var(--light);border-radius:14px;padding:16px;margin-bottom:24px;text-align:left;">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--green);
+        color:white;font-weight:800;font-size:14px;display:flex;align-items:center;
+        justify-content:center;flex-shrink:0;">✓</div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--dark);">Tap "Add" — you're done!</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px;">The 89ers icon will appear on your home screen</div>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="closeIOSSheet()">Got it!</button>
+  </div>
+</div>
+
+</body>
+</html>
