@@ -127,14 +127,8 @@
     @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
     @keyframes loadbar { 0%{width:0%} 40%{width:55%} 75%{width:82%} 100%{width:100%} }
 
-    /* ─── IFRAME ─── */
-    #appFrame {
-      position: fixed; inset: 0;
-      width: 100%; height: 100%;
-      border: none; z-index: 1;
-      opacity: 0; transition: opacity 0.5s ease;
-    }
-    #appFrame.show { opacity: 1; }
+    /* ─── IFRAME (hidden — we redirect instead) ─── */
+    #appFrame { display: none; }
 
     /* ─── INSTALL BANNER (Android/Chrome) ─── */
     #installBanner {
@@ -238,14 +232,7 @@
   <div class="loading-text">Loading menu…</div>
 </div>
 
-<!-- ═══ APP IFRAME — points to GAS Web App ═══
-     ↓ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW ↓           -->
-<iframe
-  id="appFrame"
-  src="https://script.google.com/macros/s/AKfycbz0Dc-6RGbqmvll4GTj6goYNXIYLFumaZ0a8lmSBN_Aai9jfsSm1rPiw0MvpCzSH7Opag/exec"
-  allow="fullscreen"
-  allowfullscreen
-></iframe>
+<!-- ═══ APP FRAME (redirect handles navigation) ═══ -->
 
 <!-- ═══ ANDROID INSTALL BANNER ═══ -->
 <div id="installBanner">
@@ -304,30 +291,24 @@
 
 <script>
 // ═══════════════════════════════
-//  CONFIG — set your GAS URL here
+//  CONFIG — your GAS Web App URL
 // ═══════════════════════════════
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbz0Dc-6RGbqmvll4GTj6goYNXIYLFumaZ0a8lmSBN_Aai9jfsSm1rPiw0MvpCzSH7Opag/exec';
 
 // ═══════════════════════════════
-//  SPLASH → IFRAME handoff
+//  SPLASH → REDIRECT
 // ═══════════════════════════════
-var frame  = document.getElementById('appFrame');
 var splash = document.getElementById('splash');
-
-// update iframe src from config
-frame.src = GAS_URL;
-
-frame.addEventListener('load', function() {
-  setTimeout(revealApp, 800);
-});
-
-// safety fallback — hide splash after 5s regardless
-setTimeout(revealApp, 5000);
 
 function revealApp() {
   splash.classList.add('hide');
-  frame.classList.add('show');
+  setTimeout(function() {
+    window.location.href = GAS_URL;
+  }, 600);
 }
+
+// Redirect after splash animation (4.5s matches loading bar)
+setTimeout(revealApp, 4500);
 
 // ═══════════════════════════════
 //  SERVICE WORKER
